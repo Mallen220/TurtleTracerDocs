@@ -38,10 +38,6 @@ export default defineConfig({
             },
             { label: "Live View", slug: "turtle-tracer-lib/live-view" },
             {
-              label: "Command-Based Programming",
-              slug: "turtle-tracer-lib/command-based",
-            },
-            {
               label: "Progress Tracker",
               slug: "turtle-tracer-lib/progress-tracker",
             },

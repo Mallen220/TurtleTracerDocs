@@ -23,27 +23,26 @@ Before your autonomous routine runs, you must register the commands you intend t
 
 ```java
 import com.turtletracerlib.pathing.NamedCommands;
-import com.turtletracerlib.command.InstantCommand;
 
 public void init() {
-    // Registering a simple Runnable (wrapped automatically in InstantCommand)
+    // Registering a simple Runnable
     NamedCommands.registerCommand("OpenClaw", () -> robot.claw.open());
 
-    // Registering a full Command object
-    NamedCommands.registerCommand("ScoreSpecimen", new ScoreSpecimenCommand(robot));
+    // Registering a custom Runnable for a sequence
+    NamedCommands.registerCommand("ScoreSpecimen", () -> robot.scoreSpecimen());
 
     // Registering with a description (useful for debugging)
-    NamedCommands.registerCommand("Intake", new IntakeCommand(), "Starts the intake motor");
+    NamedCommands.registerCommand("Intake", () -> robot.intake.start(), "Starts the intake motor");
 }
 ```
 
-### Supported Command Types
+### Supported Platforms
 
-The `registerCommand` method is flexible and accepts:
+The `NamedCommands` system exclusively uses standard Java `Runnable` interfaces, making it highly compatible:
 
-- **`Command` objects**: Standard TurtleTracerLib commands.
-- **`Runnable` (Lambdas)**: Automatically wrapped in an `InstantCommand`.
-- **Any Object**: Wrapped in a `ReflectiveCommandAdapter` (if it has `initialize`, `execute`, `end`, etc.).
+- **Basic Java / FTC SDK**: Pass any `Runnable` or lambda directly.
+- **NextFTC**: Supported using Runnables.
+- **SolversLib**: Supported using Runnables.
 
 ## Using ProgressTracker
 
