@@ -8,22 +8,23 @@ head:
       content: TurtleTracerLib, ProgressTracker, robot progress monitoring, FTC path events, event triggering, robotics, completion percentage, turn progress, execute events
 ---
 
-The `ProgressTracker` is a powerful utility class in TurtleTracerLib that allows you to track the percentage of completion of a path, path chain, or even a turning operation. Its primary purpose is to simplify the triggering of events (like moving an arm or spinning an intake) based on how far the robot has traveled along its current trajectory.
+The `ProgressTracker` is a utility class in TurtleTracerLib that tracks the completion percentage of a path or a turning operation. Its primary purpose is to simplify triggering mechanism events (such as moving an arm or spinning an intake) based on how far the robot has traveled along its trajectory.
 
 ## Overview
 
-The tracker monitors the robot's traversal and compares it against registered thresholds. It abstracts away the complex math required to determine if the robot has reached a specific point on a curve or a specific angle during a turn.
+The tracker monitors robot traversal and evaluates registered events against progress, time, or field position thresholds.
 
 Key features include:
 
-- **Path Progress**: Tracks progress along individual paths (0.0 to 1.0).
-- **Chain Progress**: Tracks overall progress across an entire `PathChain`.
-- **Turn Progress**: Tracks angular progress during `turnTo` operations.
-- **Event Triggering**: Automatically executes commands registered via `NamedCommands`.
+- **Path Progress**: Tracks parametric progress along the current curve segment (`getPathProgress()`, 0.0 to 1.0).
+- **Total Progress**: Tracks overall completion across the path (`getTotalProgress()` / `getCompletion()`, 0.0 to 1.0).
+- **Turn Progress**: Tracks angular progress during in-place turns.
+- **Fluent Events**: Register parametric, temporal, and spatial events directly on the tracker.
+- **Loop Execution**: `tracker.update()` evaluates and executes events safely during your OpMode loop.
 
 ## Basic Usage
 
-To use the `ProgressTracker`, you need to instantiate it, register events, and then check it periodically in your OpMode loop.
+To use `ProgressTracker`, instantiate it, register events or actions, and call `tracker.update()` in your OpMode loop.
 
 ### 1. Initialization
 
@@ -48,22 +49,32 @@ public class MyAuto extends OpMode {
 
 ### 2. Registering Events
 
-Before starting a path or turn, register the events you want to trigger. An event requires a unique name and a position threshold (from 0.0 to 1.0).
+Before starting a path or turn, register the events you want to trigger.
 
 ```java
-// Set the chain we are about to follow
-progressTracker.setCurrentChain(myPathChain);
+// Set the path to follow (Pedro Pathing 3.0 Path)
+progressTracker.setCurrentPath(myPath);
 
 // Register an event named "DeployIntake" to trigger halfway through the path (0.5)
 progressTracker.registerEvent("DeployIntake", 0.5);
 
 // Start following
-follower.followPath(myPathChain, true);
+follower.follow(myPath);
 ```
 
 ### 3. Checking for Triggers
 
-In your `loop()`, you must call `shouldTriggerEvent()` for the events you want to check. If the threshold is reached, this method returns `true` and the event is marked as triggered so it won't fire again for that path segment.
+In your `loop()`, you can call `tracker.update()` to evaluate and execute events automatically:
+
+```java
+@Override
+public void loop() {
+    follower.update();
+    progressTracker.update(); // Evaluates and executes registered events safely
+}
+```
+
+Or you can manually poll `shouldTriggerEvent()` for specific events:
 
 ```java
 @Override
@@ -81,23 +92,47 @@ public void loop() {
 }
 ```
 
+## Fluent Events
+
+You can attach actions directly to the tracker using fluent event methods:
+
+```java
+// Parametric: triggers at 75% along the current curve
+progressTracker.onParametric(0.75, () -> intake.start());
+
+// Parametric range: triggers between 30% and 60%
+progressTracker.onParametric(0.3, 0.6, () -> lights.blink());
+
+// Path completion: triggers at 80% of total path
+progressTracker.onCompletion(0.8, () -> arm.prepareScore());
+
+// Temporal: triggers 500 ms after the path begins
+progressTracker.onTemporal(500, () -> arm.lift());
+
+// Spatial: triggers within 2 inches of a target field pose
+progressTracker.onSpatial(new Pose(24.0, 48.0, Math.toRadians(90)), 2.0, () -> claw.open());
+
+// Named: maps to markers placed in the Turtle Tracer visualizer
+progressTracker.onEvent("IntakeMarker", () -> intake.start());
+```
+
+Event callbacks executed by `progressTracker.update()` run inside safe exception handling, logging any error to `System.err` without disrupting the follower.
+
 ## Integration with NamedCommands
 
-The true power of `ProgressTracker` comes when it's combined with `NamedCommands`.
-
-If you have registered a command with `NamedCommands` that perfectly matches the name of a registered event, calling `progressTracker.executeEvent(eventName)` will automatically retrieve and schedule that command.
+If you have registered a command with `NamedCommands` that matches the name of a registered event, calling `progressTracker.executeEvent(eventName)` will automatically retrieve and run that command.
 
 ```java
 // Somewhere in your init()
-NamedCommands.registerCommand("ScoreSample", new ScoreSampleCommand(arm, claw));
+NamedCommands.registerCommand("ScoreSample", () -> scoreSample());
 
 // ... later, setting up a path ...
-progressTracker.setCurrentChain(scoringPath);
+progressTracker.setCurrentPath(scoringPath);
 progressTracker.registerEvent("ScoreSample", 0.9); // Trigger near the end
 
 // ... in your loop() ...
 if (progressTracker.shouldTriggerEvent("ScoreSample")) {
-    progressTracker.executeEvent("ScoreSample"); // Automatically schedules the command
+    progressTracker.executeEvent("ScoreSample");
 }
 ```
 
@@ -105,26 +140,39 @@ if (progressTracker.shouldTriggerEvent("ScoreSample")) {
 
 The `ProgressTracker` also simplifies event triggering during in-place turns.
 
-Use the `turn()` method on the tracker to simultaneously start a turn and register an event based on the turn's completion percentage.
+Use the `turn()` method on the tracker to start a turn and register an event based on the turn's completion percentage.
 
 ```java
 // Turn to 90 degrees (PI/2 radians) and trigger "RaiseLift" when 75% complete
 progressTracker.turn(Math.PI / 2, "RaiseLift", 0.75);
 
 // In your loop:
-if (progressTracker.shouldTriggerEvent("RaiseLift")) {
-    progressTracker.executeEvent("RaiseLift");
+while (opModeIsActive() && progressTracker.isBusy()) {
+    follower.update();
+    progressTracker.update();
 }
 ```
 
 ## Reading Progress Values
 
-If you don't want to use events, you can still read the raw progress values directly from the tracker:
+You can read raw progress values directly from the tracker:
 
 ```java
-// Returns 0.0 to 1.0 for the current individual Path
-double currentPathPercent = progressTracker.getPathProgress();
+// Returns 0.0 to 1.0 for the current individual path segment
+double currentSegmentPercent = progressTracker.getPathProgress();
 
-// Returns 0.0 to 1.0 for the entire PathChain
-double totalChainPercent = progressTracker.getChainProgress();
+// Returns 0.0 to 1.0 for the entire path
+double totalProgress = progressTracker.getTotalProgress();
+double completion = progressTracker.getCompletion();
+```
+
+## Stopping
+
+To stop path following or turning:
+
+```java
+progressTracker.stop();
+
+// breakFollowing() is supported as an alias
+progressTracker.breakFollowing();
 ```

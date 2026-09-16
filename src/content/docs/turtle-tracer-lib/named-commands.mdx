@@ -65,21 +65,19 @@ When using the **Command-Based** export from TurtleTracer, the generated code au
 progressTracker.registerEvent("OpenClaw", 0.5);
 ```
 
-### 3. Setting the Chain
+### 3. Setting the Path
 
-Whenever you start a new `PathChain`, you must inform the tracker. This resets the internal state and prepares it for the new segment.
+Whenever you start a new `Path`, you must inform the tracker. This resets the internal event state and prepares it for the new trajectory.
 
 ```java
-progressTracker.setCurrentChain(myPathChain);
+progressTracker.setCurrentPath(myPath);
 ```
 
 ### 4. Updating
 
-If you are **not** using the `FollowPathCommand` (which handles updates internally via the scheduler if integrated properly, or needs manual calls), you might need to check triggers in your loop.
+In your OpMode loop, calling `progressTracker.update()` alongside `follower.update()` evaluates all registered event markers and executes triggered actions automatically and safely.
 
-However, typically the `ProgressTracker` is used within a generated `SequentialCommandGroup` or a custom command structure where checks are performed.
-
-**Note:** If you are using the **Command-Based Export** from TurtleTracer, the generated `SequentialCommandGroup` uses `WaitUntilCommand` or similar structures that query `progressTracker.shouldTriggerEvent("Name")`.
+Alternatively, if you are using a generated `SequentialCommandGroup`, you can query whether an event has triggered:
 
 ```java
 // Example usage in generated code:

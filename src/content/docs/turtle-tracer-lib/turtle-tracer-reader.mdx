@@ -51,10 +51,10 @@ public AutoPath(HardwareMap hw) throws IOException {
 Once initialized, you can retrieve any `Pose` by the name you gave the point or path segment in TurtleTracer.
 
 ```java
-import com.turtletracer.geometry.Pose;
+import com.pedropathing.math.Pose;
 
 // ...
-TurtleTracerReader pp = new TurtleTracerReader("AutoPath.pp", hw.appContext);
+TurtleTracerReader pp = new TurtleTracerReader("AutoPath.turt", hw.appContext);
 
 // Retrieve points by their string names
 Pose startPoint = pp.get("startPoint");
@@ -62,22 +62,33 @@ Pose point1 = pp.get("point1");
 Pose scoringPosition = pp.get("scoringPosition");
 ```
 
-### 3. Building PathChains
+### 3. Building Paths
 
-After retrieving the poses, you use them in your `Follower` path builder just as you would with hardcoded poses.
+After retrieving the poses, you can build your path using Pedro Pathing:
 
 ```java
-import com.turtletracer.geometry.BezierLine;
-import com.turtletracer.paths.PathChain;
+import com.pedropathing.api.Paths;
+import com.pedropathing.paths.Path;
 
 // ...
 follower.setStartingPose(startPoint);
 
-PathChain startPointTOpoint1 = follower
-    .pathBuilder()
-    .addPath(new BezierLine(startPoint, point1))
-    .setLinearHeadingInterpolation(startPoint.getHeading(), point1.getHeading())
-    .build();
+Path startPointTOpoint1 = Paths.line(startPoint, point1)
+    .linear(startPoint.heading(), point1.heading());
+```
+
+### 4. Binding Event Markers
+
+You can bind Java actions directly to event markers defined in the visualizer:
+
+```java
+import com.turtletracerlib.pathing.ProgressTracker;
+
+pp.onEvent("IntakeMarker", () -> intake.start())
+  .onEvent("ScoreMarker", () -> outtake.score());
+
+// Registers markers and binds their actions to the tracker automatically:
+pp.registerEvents(progressTracker);
 ```
 
 ## Best Practices

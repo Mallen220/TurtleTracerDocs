@@ -32,8 +32,8 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.turtletracer.follower.Follower;
-import com.turtletracer.geometry.Pose;
+import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import com.turtletracerlib.TurtleTracerLiveView;
 
 @Autonomous(name = "Example Auto with Live View")
@@ -57,15 +57,15 @@ public class ExampleAuto extends LinearOpMode {
         waitForStart();
 
         // Your autonomous logic here...
-        // follower.followPath(...);
+        // follower.follow(...);
 
         while (opModeIsActive()) {
             follower.update();
 
             // Optional: Add telemetry to Driver Station
-            telemetry.addData("X", follower.getPose().getX());
-            telemetry.addData("Y", follower.getPose().getY());
-            telemetry.addData("Heading", follower.getPose().getHeading());
+            telemetry.addData("X", follower.pose().x());
+            telemetry.addData("Y", follower.pose().y());
+            telemetry.addData("Heading", follower.pose().heading());
             telemetry.update();
         }
 

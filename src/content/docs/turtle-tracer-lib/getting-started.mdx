@@ -75,11 +75,10 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
     import com.bylazar.configurables.annotations.Configurable;
     import com.bylazar.telemetry.PanelsTelemetry;
     import com.bylazar.telemetry.TelemetryManager;
-    import com.turtletracer.follower.Follower;
-    import com.turtletracer.geometry.BezierCurve;
-    import com.turtletracer.geometry.BezierLine;
-    import com.turtletracer.geometry.Pose;
-    import com.turtletracer.paths.PathChain;
+    import com.pedropathing.follower.Follower;
+    import com.pedropathing.math.Pose;
+    import com.pedropathing.paths.Path;
+    import com.pedropathing.api.Paths;
     import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
     import com.qualcomm.robotcore.eventloop.opmode.OpMode;
     import com.qualcomm.robotcore.util.ElapsedTime;
@@ -90,7 +89,7 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
     public class TurtleTracerLibAutonomous extends OpMode {
 
       private TelemetryManager panelsTelemetry; // Panels Telemetry instance
-      public Follower follower; // TurtleTracerLib follower instance
+      public Follower follower; // PedroPathing follower instance
       private int pathState; // Current autonomous path state (state machine)
       private ElapsedTime pathTimer; // Timer for path state machine
       private Paths paths; // Paths defined in the Paths class
@@ -112,36 +111,31 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
 
       @Override
       public void loop() {
-        follower.update(); // Update TurtleTracerLib
+        follower.update(); // Update PedroPathing
         pathState = autonomousPathUpdate(); // Update autonomous state machine
 
         // Log values to Panels and Driver Station
         panelsTelemetry.debug("Path State", pathState);
-        panelsTelemetry.debug("X", follower.getPose().getX());
-        panelsTelemetry.debug("Y", follower.getPose().getY());
-        panelsTelemetry.debug("Heading", follower.getPose().getHeading());
+        panelsTelemetry.debug("X", follower.pose().x());
+        panelsTelemetry.debug("Y", follower.pose().y());
+        panelsTelemetry.debug("Heading", follower.pose().heading());
         panelsTelemetry.update(telemetry);
       }
 
       public static class Paths {
 
-        public PathChain line1;
+        public Path line1;
 
         public Paths(Follower follower) {
-          line1 = follower
-            .pathBuilder()
-            .addPath(
-              new BezierLine(new Pose(56.000, 8.000), new Pose(56.000, 36.000))
-            )
-            .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
-            .build();
+          line1 = Paths.line(new Pose(56.000, 8.000), new Pose(56.000, 36.000))
+            .linear(Math.toRadians(90), Math.toRadians(180));
         }
       }
 
       public int autonomousPathUpdate() {
         switch (pathState) {
           case 0:
-            follower.followPath(paths.line1, true);
+            follower.follow(paths.line1);
             setPathState(1);
             break;
           case 1:
@@ -187,12 +181,12 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
     ```java
     package org.firstinspires.ftc.teamcode.Commands.AutoCommands;
 
-    import com.turtletracer.follower.Follower;
-    import com.turtletracer.geometry.BezierCurve;
-    import com.turtletracer.geometry.BezierLine;
-    import com.turtletracer.geometry.Pose;
-    import com.turtletracer.paths.PathChain;
+    import com.pedropathing.follower.Follower;
+    import com.pedropathing.math.Pose;
+    import com.pedropathing.paths.Path;
+    import com.pedropathing.api.Paths;
     import com.turtletracerlib.TurtleTracerReader;
+    import com.turtletracerlib.command.FollowPathCommand;
     import com.turtletracerlib.pathing.NamedCommands;
     import com.turtletracerlib.pathing.ProgressTracker;
     import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -201,7 +195,6 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
     import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
     import com.seattlesolvers.solverslib.command.WaitCommand;
     import com.seattlesolvers.solverslib.command.WaitUntilCommand;
-    import com.seattlesolvers.solverslib.turtleTracerCommand.FollowPathCommand;
     import java.io.IOException;
     import org.firstinspires.ftc.robotcore.external.Telemetry;
     import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
@@ -215,19 +208,19 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
       private Pose startPoint;
       private Pose point1;
 
-      // Path chains
-      private PathChain startPointTOpoint1;
+      // Paths
+      private Path startPointTOpoint1;
 
       public AutoPath(final Drivetrain drive, HardwareMap hw, Telemetry telemetry)
         throws IOException {
         this.follower = drive.getFollower();
         this.progressTracker = new ProgressTracker(follower, telemetry);
 
-        TurtleTracerReader pp = new TurtleTracerReader("AutoPath.pp", hw.appContext);
+        TurtleTracerReader reader = new TurtleTracerReader("AutoPath.turt", hw.appContext);
 
         // Load poses
-        startPoint = pp.get("startPoint");
-        point1 = pp.get("point1");
+        startPoint = reader.get("startPoint");
+        point1 = reader.get("point1");
 
         follower.setStartingPose(startPoint);
 
@@ -235,7 +228,7 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
 
         addCommands(
           new InstantCommand(() -> {
-            progressTracker.setCurrentChain(startPointTOpoint1);
+            progressTracker.setCurrentPath(startPointTOpoint1);
             progressTracker.setCurrentPathName("startPointTOpoint1");
           }),
           new FollowPathCommand(follower, startPointTOpoint1)
@@ -243,14 +236,11 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
       }
 
       public void buildPaths() {
-        startPointTOpoint1 = follower
-          .pathBuilder()
-          .addPath(new BezierLine(startPoint, point1))
-          .setLinearHeadingInterpolation(
-            startPoint.getHeading(),
-            point1.getHeading()
-          )
-          .build();
+        startPointTOpoint1 = Paths.line(startPoint, point1)
+          .linear(
+            startPoint.heading(),
+            point1.heading()
+          );
       }
     }
     ```
