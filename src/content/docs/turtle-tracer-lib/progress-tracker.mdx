@@ -20,6 +20,7 @@ Key features include:
 - **Total Progress**: Tracks overall completion across the path (`getTotalProgress()` / `getCompletion()`, 0.0 to 1.0).
 - **Turn Progress**: Tracks angular progress during in-place turns.
 - **Fluent Events**: Register parametric, temporal, and spatial events directly on the tracker.
+- **Chained Paths**: Scope events to one segment of a chain, and clear one path's events before the next.
 - **Loop Execution**: `tracker.update()` evaluates and executes events safely during your OpMode loop.
 
 ## Basic Usage
@@ -118,6 +119,36 @@ progressTracker.onEvent("IntakeMarker", () -> intake.start());
 
 Event callbacks executed by `progressTracker.update()` run inside safe exception handling, logging any error to `System.err` without disrupting the follower.
 
+## Chained Paths and Several Paths in a Row
+
+The follower reports progress per segment, so on a chained path the same threshold would trigger on whichever segment reaches it first. Two tools keep events on the right path.
+
+### Segment-Scoped Events
+
+Pass the segment's index in the chain (`0` is the first path) to `onParametric`. The event only counts progress while the follower is on that segment:
+
+```java
+// Triggers at 75% of the second path in the chain
+progressTracker.onParametric(1, 0.75, () -> intake.start());
+
+// Range version: active between 30% and 60% of the second path
+progressTracker.onParametric(1, 0.3, 0.6, () -> lights.blink());
+```
+
+### Clearing a Path's Events
+
+If you register events one path at a time, call `clearPathEvents()` before registering the next path's events. It removes the current path's parametric, temporal, spatial, and named-zone events, and keeps the actions you bound with `onEvent`.
+
+```java
+progressTracker.clearPathEvents();
+progressTracker.onParametric(0.5, () -> arm.lift());
+progressTracker.setCurrentPath(nextPath);
+```
+
+When you load events from a `.turt` file, `TurtleTracerReader.registerLineEvents(...)` does the registering for one line. See [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/#5-routines-with-several-paths).
+
+`setCurrentPath()` also ends any turn the tracker was following. A new path therefore can't be held up by a turn that was never seen finishing.
+
 ## Integration with NamedCommands
 
 If you have registered a command with `NamedCommands` that matches the name of a registered event, calling `progressTracker.executeEvent(eventName)` will automatically retrieve and run that command.
@@ -152,6 +183,8 @@ while (opModeIsActive() && progressTracker.isBusy()) {
     progressTracker.update();
 }
 ```
+
+`turn()` marks the follower busy again as it starts, so a turn straight after a finished path is tracked from the start instead of looking complete immediately (fixed in v3.0.1).
 
 ## Reading Progress Values
 

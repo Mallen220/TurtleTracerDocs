@@ -70,12 +70,16 @@ For more complex plugins, you can access internal registries and stores:
   - `components`: Register custom Svelte components.
   - `tabs`: Add new tabs to the side control panel.
   - `navbarActions`: Add buttons to the top navigation bar.
-  - `hooks`: Listen for events like `onSave`, `onLoad`, etc.
+  - `hooks`: Listen for events like `onSave`, `onLoad`, etc. The `onSave` hook runs for every save, however the user saves a project. Before 2.4.0 it ran only for saves from the file manager.
 
 - **`turtle.stores`**:
   - `project`: Access reactive stores for path data (`startPointStore`, `linesStore`, etc.).
   - `app`: Access application-level state.
   - `get`: The Svelte `get` function to read current store values.
+
+#### Custom Actions and Command Libraries
+
+If your plugin registers an action that generates code for the sequential export, read `context.targetLibrary` (`"SolversLib"`, `"NextFTC"`, or `"Ivy"`) to see which command library the user picked. The older `context.isNextFTC` flag still works for existing plugins, but it is deprecated and can't tell Ivy from SolversLib. The `plugins/turtle.d.ts` type definitions in the Turtle Tracer repository list the current types.
 
 ### Example: Adding a Button
 

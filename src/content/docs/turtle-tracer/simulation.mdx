@@ -36,7 +36,21 @@ The simulation uses your robot's configured constraints to predict real-world pe
 
 - **Kinematics**: Accurately models holonomic (omni-directional) movement.
 - **Velocity Limits**: Respects the **Max Velocity** and **Angular Velocity** settings.
-- **Acceleration**: Accounts for **Max Acceleration** to predict realistic travel times.
+- **Acceleration**: Accounts for **Max Acceleration** to predict realistic travel times. Travel time estimates include acceleration, and distance on curved paths is measured along the curve instead of as straight segments.
+- **Braking**: Uses **Max Deceleration**, or the braking coefficients if you enter them in the [Motion settings](/turtle-tracer/settings/#motion).
+- **Headings**: Large heading changes take the short way around. Before its first path, the robot faces the way that path starts, even when the first path is inside a macro, so exported code starts from the same heading as the preview.
+- **Turns**: By default the robot turns while it drives, as Pedro does. Turn on **Stop to Turn** in the Motion settings to have it stop and turn in place before a path that starts at a different heading.
+
+### Chained Paths
+
+When paths are chained, the robot doesn't stop at the join. Turtle Tracer simulates the corner the way Pedro Pathing drives it:
+
+- The robot can't turn instantly, so it carries on past the join, swings out, and steers back onto the next path (overshooting).
+- The field shows the swing as a dashed line, the playback follows it, and the time includes it.
+- The Table counts the swing in the time of the path it leads onto. The speed tooltip and heatmap skip the part of a path the robot doesn't drive.
+- Sharp corners, and corners where the robot misses the join point, get a warning. See [Path Validation](/turtle-tracer/validation/#5-chain-corner-chained-corners).
+
+How hard the robot steers back depends on the **Pedro Pathing Version**, **Translational P**, and **Path Settle Time** settings. Match them to your robot's values.
 
 ## Verification Tools
 

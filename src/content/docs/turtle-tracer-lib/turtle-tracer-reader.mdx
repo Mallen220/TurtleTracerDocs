@@ -5,34 +5,38 @@ head:
   - tag: meta
     attrs:
       name: keywords
-      content: TurtleTracerLib, TurtleTracerReader, FTC, dynamic loading, path points, .pp files, robotics, JSON file loading, dynamic poses, no recompiling
+      content: TurtleTracerLib, TurtleTracerReader, FTC, dynamic loading, path points, .turt files, robotics, JSON file loading, dynamic poses, no recompiling
 ---
 
-The `TurtleTracerReader` class is great utility in TurtleTracerLib for teams that utilize the **Command-Based** code export from TurtleTracer. It allows your robot to dynamically read poses (Points) directly from a `.pp` file saved on the robot's control hub, decoupling the path geometry from your Java code.
+The `TurtleTracerReader` class is a utility in TurtleTracerLib for teams that use the **Command-Based** code export from TurtleTracer. It lets your robot read poses (points) from a `.turt` file stored on the robot, so the path geometry doesn't live in your Java code.
 
 ## Why Use TurtleTracerReader?
 
-In traditional path generation (Standard OpMode export), every X, Y, and Heading coordinate is hardcoded into your Java file. This means any minor tweak to a curve requires re-exporting the Java code, copy-pasting it into Android Studio, and recompiling the entire app to the robot.
+In the standard OpMode export, every X, Y, and heading value is written into your Java file. Any small tweak to a curve means exporting the code again, pasting it into Android Studio, and rebuilding the app.
 
 `TurtleTracerReader` changes this workflow:
 
-1. You export a `.pp` (JSON) file from TurtleTracer.
-2. You upload this `.pp` file directly to your robot's internal storage.
+1. You save your project as a `.turt` file in TurtleTracer.
+2. You put that file in the robot's assets or storage.
 3. Your Java code uses `TurtleTracerReader` to read the named points.
 
-**Benefit:** If you need to adjust a path at a competition, you just tweak it in the visualizer, save the new `.pp` file, upload it to the robot via the FTC Dashboard or File Manager, and run the robot. **No recompiling required!**
+If you need to adjust a path at a competition, change it in TurtleTracer, save the `.turt` file, upload it to the robot, and run. **No recompiling required.**
+
+:::note[Older .pp files]
+TurtleTracer saves projects as `.turt` files. The reader still opens legacy `.pp` files, and applies the same rules as far as the older file has the fields it needs. For a `.pp` file, the start heading can differ from the app's when the first path in the sequence isn't the first line.
+:::
 
 ## Uploading the File
 
-Before you can read a file, it must be on the robot. It is recommended to upload `.pp` files to `TeamCode/src/main/assets/AutoPaths` for the easiest implementation.
+Before you can read a file, it must be on the robot. The simplest option is to put `.turt` files in `TeamCode/src/main/assets/AutoPaths`.
 
 ## Usage in Code
 
-When you use the **Command-Based (SolversLib/NextFTC)** export option in TurtleTracer, the generated code already includes `TurtleTracerReader`.
+When you use the **Command-Based (SolversLib, NextFTC or Ivy)** export option in TurtleTracer and leave **Embed Pose Data** off, the generated code already includes `TurtleTracerReader`.
 
 ### 1. Initialization
 
-You initialize the reader by passing the name of the uploaded file and the hardware map's application context. This operation can throw an `IOException` if the file isn't found, so it must be handled or declared.
+Pass the name of the uploaded file and the hardware map's application context. This can throw an `IOException` if the file isn't found, so handle or declare it.
 
 ```java
 import com.turtletracerlib.TurtleTracerReader;
@@ -41,30 +45,50 @@ import java.io.IOException;
 
 // Inside your OpMode or CommandGroup constructor:
 public AutoPath(HardwareMap hw) throws IOException {
-    // Look for "AutoPath.pp" on the robot's storage
-    TurtleTracerReader pp = new TurtleTracerReader("AutoPath.pp", hw.appContext);
+    // Look for "AutoPath.turt" on the robot's storage
+    TurtleTracerReader reader = new TurtleTracerReader("AutoPath.turt", hw.appContext);
 }
+```
+
+If the file isn't an Android asset, the reader also accepts an `InputStream`, a `Reader`, or the raw JSON as a `String`:
+
+```java
+TurtleTracerReader fromStream = new TurtleTracerReader(inputStream);
+TurtleTracerReader fromJson = new TurtleTracerReader(jsonString);
 ```
 
 ### 2. Retrieving Poses
 
-Once initialized, you can retrieve any `Pose` by the name you gave the point or path segment in TurtleTracer.
+Once initialized, get any `Pose` by the name you gave the point or path in TurtleTracer.
 
 ```java
 import com.pedropathing.math.Pose;
 
-// ...
-TurtleTracerReader pp = new TurtleTracerReader("AutoPath.turt", hw.appContext);
-
 // Retrieve points by their string names
-Pose startPoint = pp.get("startPoint");
-Pose point1 = pp.get("point1");
-Pose scoringPosition = pp.get("scoringPosition");
+Pose startPoint = reader.get("startPoint");
+Pose point1 = reader.get("point1");
+Pose scoringPosition = reader.get("ScoringPosition");
 ```
+
+Poses are Pedro field coordinates, the same numbers TurtleTracer writes into generated code. They are worked out from the file's start point and lines, so nothing in the file is stored twice.
+
+- **Start pose**: `startPoint` takes the heading of the first path the robot drives.
+- **Line poses**: a line's pose uses its fixed end angle, or `0` when the robot follows the path.
+- **Names**: everything except letters and digits is dropped, and a line with no name is called `point<n>`. This matches the names the generated code asks for. Lines linked under one name (saved as `Name (1)`, `Name (2)`) share the first one's pose.
+- **Control points**: Bézier control points are named `<line>_line<index>_control<n>`, for example `greg_line1_control1`, so two lines with the same name don't overwrite each other. The older `<line>_control<n>` form still returns the first line with that name.
+- **Missing names**: `get()` returns `null` if no pose has that name.
+
+You can also read everything the file holds: `getAllPoses()`, `getStartPoint()`, `getLines()`, `getSequence()`, `getShapes()`, `getHeader()`, and `getVersion()`.
+
+:::caution[Poses no longer rotate (v3.0.3)]
+Before v3.0.3 the reader rotated points by 90°, so `toPose(x, y, deg)` returned `new Pose(y, 144 - x, deg - 90)`. It now returns `new Pose(x, y, Math.toRadians(deg))`. A routine read from a `.turt` file now places the robot where the same routine with embedded poses does.
+
+If you hard-coded absolute positions that depended on the old values, regenerate the code and check them.
+:::
 
 ### 3. Building Paths
 
-After retrieving the poses, you can build your path using Pedro Pathing:
+After retrieving the poses, build your path with Pedro Pathing:
 
 ```java
 import com.pedropathing.api.Paths;
@@ -79,20 +103,39 @@ Path startPointTOpoint1 = Paths.line(startPoint, point1)
 
 ### 4. Binding Event Markers
 
-You can bind Java actions directly to event markers defined in the visualizer:
+Bind Java actions to event markers defined in the visualizer:
 
 ```java
 import com.turtletracerlib.pathing.ProgressTracker;
 
-pp.onEvent("IntakeMarker", () -> intake.start())
-  .onEvent("ScoreMarker", () -> outtake.score());
+reader.onEvent("IntakeMarker", () -> intake.start())
+      .onEvent("ScoreMarker", () -> outtake.score());
 
-// Registers markers and binds their actions to the tracker automatically:
-pp.registerEvents(progressTracker);
+// Registers every marker in the file and binds its action to the tracker:
+reader.registerEvents(progressTracker);
 ```
+
+The reader maps each marker to the right event type from the file: `parametric` markers become progress triggers, `temporal` markers become timers, and `pose` markers become proximity triggers. If you didn't bind an action with `onEvent`, the marker looks up a command registered in [NamedCommands](/turtle-tracer-lib/named-commands/).
+
+### 5. Routines With Several Paths
+
+`registerEvents` registers the markers of every line at once. In a routine that follows several paths in a row, each marker could then trigger during whichever path happens to be running.
+
+For those routines, register one line at a time. Clear the previous path's events, register the next line's markers, then set the path:
+
+```java
+progressTracker.clearPathEvents();
+reader.registerLineEvents(progressTracker, lineIndex, segmentIndex);
+progressTracker.setCurrentPath(nextPath);
+```
+
+- `lineIndex` is the line's index in the file, as listed by `getLines()`.
+- `segmentIndex` is the line's position within its chain (`0` for a path that isn't chained). Parametric progress is reported per segment, so this keeps a marker from triggering on the wrong segment of a chain.
+
+The generated command-based and Java code already does this for you. See [ProgressTracker](/turtle-tracer-lib/progress-tracker/) for `clearPathEvents()` and segment-scoped events.
 
 ## Best Practices
 
-- **Naming Conventions**: Give your points clear, descriptive names in TurtleTracer (e.g., `preloadDrop`, `samplePickup1`). `TurtleTracerReader` relies entirely on these string keys.
-- **File Updates**: Remember that if you change the _structure_ of your path (e.g., adding entirely new segments or renaming points), you will need to re-export the Java code. `TurtleTracerReader` is meant for tweaking existing geometry.
-- **Error Handling**: The visualizer's generated code simply throws `IOException` up the chain. In a robust competition setup, you might want to catch this error and output a telemetry message so drivers know the file is missing before they press Start.
+- **Naming Conventions**: Give your points clear, descriptive names in TurtleTracer (for example `preloadDrop` or `samplePickup1`). `TurtleTracerReader` relies on these names, with punctuation removed.
+- **File Updates**: If you change the _structure_ of your path (adding segments, or renaming points), export the code again. `TurtleTracerReader` is meant for tweaking existing geometry.
+- **Error Handling**: The generated code lets the `IOException` pass up the chain. In a competition setup you may want to catch it and show a telemetry message so drivers know the file is missing before they press Start.

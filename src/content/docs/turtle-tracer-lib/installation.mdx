@@ -32,13 +32,15 @@ dependencies {
     implementation 'com.github.Mallen220:TurtleTracerLib:master-SNAPSHOT' // or use a specific tag
 
     // Core Dependencies
-    implementation 'com.pedropathing:core:3.0.0'
-    implementation 'com.pedropathing:revhub:3.0.0'
+    implementation 'com.pedropathing:core:3.0.1'
+    implementation 'com.pedropathing:revhub:3.0.1'
 }
 ```
 
 :::note[Pedro Pathing 3.0]
-TurtleTracerLib v3.0.0 is updated for Pedro Pathing 3.0.0. Replace older `2.x` dependencies with `com.pedropathing:core:3.0.0` and `com.pedropathing:revhub:3.0.0`.
+TurtleTracerLib v3.0.0 and newer target Pedro Pathing 3.x. Replace older `2.x` dependencies with `com.pedropathing:core:3.0.1` and `com.pedropathing:revhub:3.0.1`. Pedro 3.0.1 fixes the path completion calculation that `ProgressTracker` relies on.
+
+TurtleTracerLib v3.0.2 and newer are built against the FTC SDK 12.0.0 (2026/27 season).
 :::
 
 After adding these, sync your Gradle project to download the dependencies.

@@ -37,11 +37,11 @@ General application settings.
 
 Configure your robot's physical dimensions and appearance.
 
-- **Robot Profiles**: Save and load different robot configurations.
+- **Robot Profiles**: Save and load different robot configurations. A profile stores your dimensions, velocities, and the Motion settings that describe how your robot drives, including Translational P, the braking coefficients, and Path Settle Time. Profiles saved by older versions keep your current values for the newer fields.
 - **Dimensions**:
   - **Robot Length**: Length of the robot base (in inches).
   - **Robot Width**: Width of the robot base (in inches).
-- **Safety Margin**: Buffer zone around obstacles and field boundaries (in inches).
+- **Safety Margin**: Buffer zone around obstacles and field boundaries (in inches). The default is 2.
 - **Validation**:
   - **Validate Field Boundaries**: Warn if the robot leaves the field.
   - **Restrict Dragging**: Prevent moving points outside the field boundaries.
@@ -53,19 +53,30 @@ Configure your robot's physical dimensions and appearance.
 
 ## Motion
 
-Simulate robot physics for path timing and visualization.
+Simulate robot physics for path timing and visualization. Each field has a short description in the app that names the matching Pedro Pathing constant, so you can copy your real values across.
 
 - **Velocity**:
-  - **X Velocity**: Max velocity in X direction (in/s).
-  - **Y Velocity**: Max velocity in Y direction (in/s).
-  - **Max Velocity**: Overall max velocity (in/s).
+  - **Forward Velocity**: Top speed driving the way the robot faces (in/s). Pedro: `maxAchievableForwardVelocity`.
+  - **Strafe Velocity**: Top speed driving sideways (in/s). Pedro: `maxAchievableStrafeVelocity`. Set it equal to Forward Velocity for a robot that is as fast in every direction.
+  - **Max Velocity**: The fastest the robot goes along a path (in/s). A good start is your forward velocity.
   - **Angular Velocity**: Max rotation speed (supports rad/s or deg/s).
 - **Acceleration**:
   - **Max Acceleration**: Max acceleration (in/s²).
-  - **Max Deceleration**: Max deceleration (in/s²).
+  - **Max Deceleration**: Max deceleration (in/s²). If you enter braking coefficients below, those are used instead.
   - **Max Angular Acceleration**: Max angular acceleration (rad/s² or deg/s²). Set to 0 to auto-calculate.
 - **Friction**:
-  - **Friction Coefficient**: Adjust surface resistance (higher values = more resistance).
+  - **Friction Coefficient**: Higher values mean more grip. It is used for the wheel slip warning in Path Statistics.
+- **Path Following**:
+  - **Pedro Pathing Version**: `v3` (the default) measures heading progress by distance along a path and hands chained paths over early. `v2 (approximate)` uses the curve parameter and hands over at the end.
+  - **Path Settle Time (s)**: How long the robot holds at the end of a path before the next step. The default is `0.05`.
+  - **Translational P**: The kP of your Pedro translational PID (power per inch of error). It steers the robot back onto the path at chained corners. The minimum is `0.01`, and values above `1` act like `1`. Pedro's default, and this setting's, is `0.1`. A small corner preview shows what a value does.
+  - **Stop to Turn**: Stop and turn in place before a path that starts at a different heading. It is off by default, because Pedro turns while it drives.
+- **Braking** (advanced): Pedro's braking model, where distance to stop = quadratic × speed² + linear × speed.
+  - **Braking Distance, Quadratic** and **Braking Distance, Linear**: Leave both at `0` to brake at the max deceleration. In a `ForesightConfig` these come from `quadraticBrakeCoefficients` and `linearBrakeCoefficients`; use the forward values.
+
+:::note[Removed settings]
+**Slow Down for Curves** and **Heading Response Time** were removed in 2.4.0, because they changed the results very little.
+:::
 
 ## Interface
 
@@ -81,6 +92,7 @@ Customize the visualizer's appearance and behavior.
 - **Velocity Heatmap**: Color-code the path based on speed (Green = Slow, Red = Fast).
 - **Velocity Tooltip**: (Off by default) Shows velocity, time, and distance traveled at any point in a path on hover.
 - **Follow Robot**: Automatically pan the view to keep the robot centered during simulation.
+- **Square Corners**: Draw buttons, dialogs, panels, and inputs with square corners instead of rounded ones. It is off by default.
 
 ## Code Export
 
@@ -107,8 +119,8 @@ Configure how code is generated from your paths.
 
 **Sequential Command:**
 
-- **Target Library**: Choose between `SolversLib` or `NextFTC`.
-- **Embed Pose Data**: Embed pose data directly in the code (no `.pp` file needed).
+- **Target Library**: Choose between `SolversLib`, `NextFTC`, or `Ivy`. NextFTC and Ivy output is experimental.
+- **Embed Pose Data**: Embed pose data directly in the code (no `.turt` file needed).
 - **Package Name**: Java package for the generated class.
 
 ## Advanced

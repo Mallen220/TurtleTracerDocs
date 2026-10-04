@@ -25,6 +25,7 @@ For the optimizer to work effectively, ensure your **Settings** are accurate:
 
 - **Robot Dimensions**: Set the correct `Length` and `Width` of your robot.
 - **Safety Margin**: Add a buffer (e.g., 2 inches) to ensure you don't graze obstacles. The more precise the drive train the smaller the buffer.
+- **Motion Settings**: Set your robot's real velocities, acceleration, and Translational P. The optimizer uses them to time chained corners.
 - **Obstacles**: Define accurate obstacles in the "Obstacles" tab.
 
 ## The Optimization Process
@@ -38,6 +39,15 @@ When you run the optimizer, it follows these steps:
 5.  **Repeat**: This cycle repeats for the defined number of iterations.
 
 > **Note**: The optimizer will automatically add or remove control points if it helps navigate around an obstacle.
+
+## Chained Paths and Sharp Corners
+
+The optimizer can handle chained paths where the robot has to swing wide at a sharp corner. When your project has chained paths, the Optimization dialog shows an **Include chain corner correction** checkbox before you start a run. It is on by default, applies to that run only, and isn't saved as a setting.
+
+- **On**: The robot is timed handing over early and swinging wide at chained corners. A swing into an obstacle counts as a collision, and paths that skip the point where two paths join are penalized. Watch out for strange path behavior.
+- **Off**: The robot is timed following each path exactly. Robots with a well-tuned PID may find this more helpful. Once you apply a path optimized this way, the simulation includes the corner correction, so its time and route can differ from what the optimizer reported.
+
+After a run, the dialog tells you how many sharp chained corners are left in the optimized path. These are warnings, so you can still apply the path. Check [Path Statistics](/turtle-tracer/simulation/#chained-paths) and verify the path yourself.
 
 ## Understanding the Settings
 

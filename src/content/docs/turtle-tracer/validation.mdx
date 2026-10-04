@@ -36,19 +36,19 @@ When enabled, the visualizer will constantly check the path as you drag points o
 
 ## What Validation Checks
 
-The validation system evaluates your path against four primary check types. Each has custom logic to ensure your robot moves safely and realistically:
+The validation system evaluates your path against five primary check types. Each has custom logic to ensure your robot moves safely and realistically:
 
 ### 1. `boundary` (Field Boundaries)
 
 Ensures the robot does not attempt to drive outside the 144x144 inch field perimeter.
 
-- Validation accurately uses the `Length` and `Width` specified in your [Robot Settings](/turtle-tracer/settings/) to simulate the robot's exact footprint along the entire path. If any part of the robot's bumper crosses the field wall, it triggers a `boundary` error.
+- Validation accurately uses the `Length` and `Width` specified in your [Robot Settings](/turtle-tracer/settings/) to simulate the robot's exact footprint along the entire path, at the angle the robot is actually facing. If any part of the robot's bumper crosses the field wall, it triggers a `boundary` error.
 
 ### 2. `obstacle` (Obstacles)
 
 Checks against any custom polygons you have defined in the **[Obstacles](/turtle-tracer/obstacles/)** panel.
 
-- If the robot's projected path and physical dimensions intersect with an obstacle polygon, it triggers an `obstacle` error.
+- If the robot's projected path and physical dimensions intersect with an obstacle polygon, it triggers an `obstacle` error. Collision markers sit at the robot's real position, and thin obstacles that cross the robot are detected.
 
 ### 3. `keep-in` (Keep-In Zones)
 
@@ -61,6 +61,15 @@ Special zones where the robot is _required_ to stay inside.
 A sanity check that prevents paths from having a distance of zero.
 
 - If a path segment's start point and end point are in the exact same location with no actual movement required, it triggers a `zero-length` error, as this can cause mathematical anomalies in the robot's path follower.
+
+### 5. `chain-corner` (Chained Corners)
+
+Checks the corners where two [chained paths](/turtle-tracer/simulation/#chained-paths) join. A robot can't change direction instantly, so at a sharp corner it carries on past the join, swings out, and steers back onto the next path.
+
+- A corner gets a warning if the direction changes by 60° or more, or if the robot cuts the corner and passes more than 3 inches from the point where the paths join.
+- It is an error if the robot is still not back on the next path after it should have settled. This usually means it can't follow the next path at this speed.
+- Each corner is reported once. The warning says how far the robot swings or misses by, and appears in the validation list, as a marker on the field, and in Path Statistics.
+- How strongly the robot corrects depends on **Translational P** in the [Motion settings](/turtle-tracer/settings/#motion).
 
 ## Configuring Validation Settings
 
@@ -78,6 +87,7 @@ When an error is detected, the visualizer will typically highlight the problemat
 
 - **Boundary/Obstacle Collisions:** Try dragging control points to widen the curve around the obstacle, or use the **[Path Optimizer](/turtle-tracer/optimization/)** (`Ctrl + Shift + O`) to let the visualizer find a safe route automatically.
 - **Zero-Length Errors:** Delete the redundant path segment or space the points out.
+- **Chained Corner Warnings:** Soften the corner by moving the control points, slow the robot down, or unchain the two paths so the robot stops at the join. The [Path Optimizer](/turtle-tracer/optimization/) can also handle sharp chained corners.
 
 ## Best Practices
 

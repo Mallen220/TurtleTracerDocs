@@ -170,10 +170,12 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
 
     ### Steps
     1.  Click the **Export** button in the top right corner.
-    2.  Select **"SolversLib"** (or Command-Based) as the format.
+    2.  Select **Sequential Command** as the format, then choose **SolversLib**, **NextFTC**, or **Ivy** as the target library. NextFTC and Ivy output is experimental.
     3.  Enter your team's package name.
     4.  Click **Copy to Clipboard** (or save the file).
-    5.  **Important**: This method typically requires you to save the path file (`.pp`) to your robot's storage as well, as it uses `TurtleTracerReader` to load points dynamically.
+    5.  **Important**: Unless you turn on **Embed Pose Data**, this method requires you to put the project file (`.turt`) on your robot as well, because it uses `TurtleTracerReader` to load points dynamically. The example below uses SolversLib.
+
+    **Ivy output:** Ivy builds commands with static factories rather than subclassing, so the generated class returns a `Command` instead of extending one. Call `Scheduler.reset()` in `init()`, start the routine with `new AutoPath(follower, hardwareMap).command().schedule()`, and call `follower.update()` and `Scheduler.execute()` every loop.
 
     ### Example Output
     This template generates a command group that chains together path following commands.
