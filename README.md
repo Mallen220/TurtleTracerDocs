@@ -24,7 +24,7 @@ Each subproject is self‑contained but shares reference data updated by the
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 1. **Clone the repository** (if not already):
 
@@ -47,7 +47,7 @@ Each subproject is self‑contained but shares reference data updated by the
 
 ---
 
-## 📚 Documentation Site
+## Documentation Site
 
 This workspace uses [Astro](https://docs.astro.build) with the Starlight
 template for hosting documentation. Content is stored under
@@ -66,7 +66,7 @@ Add markdown files under `src/content/docs/` to extend project documentation.
 
 ---
 
-## 📄 License
+## License
 
 This project is open for everyone\*! We believe in the power of open source and community collaboration. You are free to use, modify, and distribute this software as you see fit. All we ask is that you give credit to the original developers and any contributors who have helped shape this tool. If you make improvements, please consider sharing them back with the community! Please note this project uses a modified version of the Apache 2.0 license.
 
