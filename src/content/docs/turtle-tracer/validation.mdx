@@ -12,6 +12,8 @@ head:
 
 Path Validation is a crucial feature that checks your FTC autonomous routines for potential issues before you run them on a real robot. It analyzes your paths for collisions with obstacles or field boundaries, and ensures the planned movements are kinematically possible based on your robot's configured constraints.
 
+![Validation markers on the field: a red stretch where the path runs into an obstacle, a yellow marker at a chained corner, and a magenta marker at a zero-length segment.](../../../assets/screenshots/validation.png)
+
 ## Using the Validation Tools
 
 You can run validation manually or enable it to run continuously in the background.
@@ -68,7 +70,7 @@ Checks the corners where two [chained paths](/turtle-tracer/simulation/#chained-
 
 - A corner gets a warning if the direction changes by 60° or more, or if the robot cuts the corner and passes more than 3 inches from the point where the paths join.
 - It is an error if the robot is still not back on the next path after it should have settled. This usually means it can't follow the next path at this speed.
-- Each corner is reported once. The warning says how far the robot swings or misses by, and appears in the validation list, as a marker on the field, and in Path Statistics.
+- Each corner is reported once. The warning says how far the robot swings or misses by, and appears in the validation list, as a marker on the field, and in Path Statistics (on the **Insights** tab).
 - How strongly the robot corrects depends on **Translational P** in the [Motion settings](/turtle-tracer/settings/#motion).
 
 ## Configuring Validation Settings
