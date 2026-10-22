@@ -43,9 +43,11 @@ The Live View server operates over TCP on port **8888**.
 
 **Checklist:**
 
-1. **Network Connection:** Ensure your computer is connected to the same Wi-Fi network as the Robot Controller (e.g., the Control Hub's Wi-Fi network).
-2. **OpMode Running:** The `TurtleTracerLiveView.getInstance().start()` method must be actively running in your initialized OpMode.
-3. **Firewall:** Ensure your computer's firewall is not blocking outbound connections to port 8888.
+1. **Desktop App:** Live View connects from the TurtleTracer desktop app. The browser version has no way to open the socket and shows "Telemetry API not available".
+2. **Network Connection:** Ensure your computer is connected to the same Wi-Fi network as the Robot Controller (e.g., the Control Hub's Wi-Fi network).
+3. **Protocol and Port:** In the **Telemetry** tab, select **TCP (TurtleTracerLib)** with port `8888`. **WebSocket (Panels)** is a different protocol and will not talk to `TurtleTracerLiveView`.
+4. **OpMode Running:** The `TurtleTracerLiveView.getInstance().start()` method must be actively running in your initialized OpMode, and `setFollower(...)` (or `setPoseProvider(...)`) must have been called. Without a pose source the connection succeeds but no data arrives.
+5. **Firewall:** Ensure your computer's firewall is not blocking outbound connections to port 8888.
 
 ## Path Optimization
 
