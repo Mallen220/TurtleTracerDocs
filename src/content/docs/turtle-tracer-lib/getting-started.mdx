@@ -11,6 +11,7 @@ head:
 ---
 
 import { Tabs, TabItem } from "@astrojs/starlight/components";
+import GeneratedCode from "../../../components/GeneratedCode.astro";
 
 Welcome to TurtleTracerLib! This guide will walk you through creating your first autonomous program using the library.
 
@@ -59,108 +60,20 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
 
     ### Steps
     1.  Click the **Export** button in the top right corner.
-    2.  Ensure **"Java OpMode"** is selected.
+    2.  Choose **Java Code** from the menu, or **Kotlin Code** if your team writes Kotlin.
     3.  Check **"Generate Full Class"**.
     4.  Enter your team's package name (e.g., `org.firstinspires.ftc.teamcode`).
-    5.  Click **Copy to Clipboard**.
-    6.  Paste the code into a new Java file in your Android Studio project.
+    5.  Click **Copy Code**.
+    6.  Paste the code into a new Java (or Kotlin) file in your Android Studio project.
 
     ### Example Output
-    Below is an example of the auto-generated OpMode. Note the use of `PanelsTelemetry` and `Constants`.
+    Below is the OpMode generated for a project with one path, in Java and in Kotlin. Note the use of `PanelsTelemetry` and `Constants`.
 
-    ```java
-
-    package org.firstinspires.ftc.teamcode.Commands.AutoCommands;
-
-    import com.bylazar.configurables.annotations.Configurable;
-    import com.bylazar.telemetry.PanelsTelemetry;
-    import com.bylazar.telemetry.TelemetryManager;
-    import com.pedropathing.follower.Follower;
-    import com.pedropathing.math.Pose;
-    import com.pedropathing.paths.Path;
-    import com.pedropathing.api.Paths;
-    import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-    import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-    import com.qualcomm.robotcore.util.ElapsedTime;
-    import org.firstinspires.ftc.teamcode.turtleTracer.Constants;
-
-    @Autonomous(name = "TurtleTracerLib Autonomous", group = "Autonomous")
-    @Configurable // Panels
-    public class TurtleTracerLibAutonomous extends OpMode {
-
-      private TelemetryManager panelsTelemetry; // Panels Telemetry instance
-      public Follower follower; // PedroPathing follower instance
-      private int pathState; // Current autonomous path state (state machine)
-      private ElapsedTime pathTimer; // Timer for path state machine
-      private Paths paths; // Paths defined in the Paths class
-
-      @Override
-      public void init() {
-        panelsTelemetry = PanelsTelemetry.INSTANCE.getTelemetry();
-        // ...
-        panelsTelemetry.debug("Status", "Initialized");
-        panelsTelemetry.update(telemetry);
-
-        follower = Constants.createFollower(hardwareMap);
-        // Determine starting heading: prefer geometric heading when a path exists, otherwise fall back to explicit startPoint values
-        follower.setStartingPose(new Pose(56.000, 8.000, Math.toRadians(90.000)));
-
-        pathTimer = new ElapsedTime();
-        paths = new Paths(follower); // Build paths
-      }
-
-      @Override
-      public void loop() {
-        follower.update(); // Update PedroPathing
-        pathState = autonomousPathUpdate(); // Update autonomous state machine
-
-        // Log values to Panels and Driver Station
-        panelsTelemetry.debug("Path State", pathState);
-        panelsTelemetry.debug("X", follower.pose().x());
-        panelsTelemetry.debug("Y", follower.pose().y());
-        panelsTelemetry.debug("Heading", follower.pose().heading());
-        panelsTelemetry.update(telemetry);
-      }
-
-      public static class Paths {
-
-        public Path line1;
-
-        public Paths(Follower follower) {
-          line1 = Paths.line(new Pose(56.000, 8.000), new Pose(56.000, 36.000))
-            .linear(Math.toRadians(90), Math.toRadians(180));
-        }
-      }
-
-      public int autonomousPathUpdate() {
-        switch (pathState) {
-          case 0:
-            follower.follow(paths.line1);
-            setPathState(1);
-            break;
-          case 1:
-            if (!follower.isBusy()) {
-              setPathState(2);
-            }
-            break;
-          case 2:
-            requestOpModeStop();
-            pathState = -1;
-            break;
-        }
-        return pathState;
-      }
-
-      public void setPathState(int pState) {
-        pathState = pState;
-        pathTimer.reset();
-      }
-    }
-    ```
+    <GeneratedCode example="simple-opmode" />
 
     ### Key Components
     -   **`pathState`**: A state machine variable that tracks which segment of the path is currently running.
-    -   **`Paths` Class**: Contains all your generated `PathChain` definitions.
+    -   **`Paths` Class**: Contains all your generated `Path` definitions.
     -   **`autonomousPathUpdate()`**: The logic that switches between paths and waits for completion.
 
   </TabItem>
@@ -171,85 +84,21 @@ When you are ready to export, you have two options: a standard **Java OpMode** o
     ### Steps
     1.  Click the **Export** button in the top right corner.
     2.  Select **Sequential Command** as the format, then choose **SolversLib**, **NextFTC**, or **Ivy** as the target library. NextFTC and Ivy output is experimental.
-    3.  Enter your team's package name.
-    4.  Click **Copy to Clipboard** (or save the file).
+    3.  Enter your team's package name, and use the **Language** switch to choose Java or Kotlin.
+    4.  Click **Copy Code** (or **Save to File**).
     5.  **Important**: Unless you turn on **Embed Pose Data**, this method requires you to put the project file (`.turt`) on your robot as well, because it uses `TurtleTracerReader` to load points dynamically. The example below uses SolversLib.
 
     **Ivy output:** Ivy builds commands with static factories rather than subclassing, so the generated class returns a `Command` instead of extending one. Call `Scheduler.reset()` in `init()`, start the routine with `new AutoPath(follower, hardwareMap).command().schedule()`, and call `follower.update()` and `Scheduler.execute()` every loop.
 
     ### Example Output
-    This template generates a command group that chains together path following commands.
+    This is the class generated for a three-path routine with a wait and two event markers. It reads its poses from `AutoPath.turt`, and registers each path's event markers just before that path runs.
 
-    ```java
-    package org.firstinspires.ftc.teamcode.Commands.AutoCommands;
-
-    import com.pedropathing.follower.Follower;
-    import com.pedropathing.math.Pose;
-    import com.pedropathing.paths.Path;
-    import com.pedropathing.api.Paths;
-    import com.turtletracerlib.TurtleTracerReader;
-    import com.turtletracerlib.command.FollowPathCommand;
-    import com.turtletracerlib.pathing.NamedCommands;
-    import com.turtletracerlib.pathing.ProgressTracker;
-    import com.qualcomm.robotcore.hardware.HardwareMap;
-    import com.seattlesolvers.solverslib.command.InstantCommand;
-    import com.seattlesolvers.solverslib.command.ParallelRaceGroup;
-    import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
-    import com.seattlesolvers.solverslib.command.WaitCommand;
-    import com.seattlesolvers.solverslib.command.WaitUntilCommand;
-    import java.io.IOException;
-    import org.firstinspires.ftc.robotcore.external.Telemetry;
-    import org.firstinspires.ftc.teamcode.Subsystems.Drivetrain;
-
-    public class AutoPath extends SequentialCommandGroup {
-
-      private final Follower follower;
-      private final ProgressTracker progressTracker;
-
-      // Poses
-      private Pose startPoint;
-      private Pose point1;
-
-      // Paths
-      private Path startPointTOpoint1;
-
-      public AutoPath(final Drivetrain drive, HardwareMap hw, Telemetry telemetry)
-        throws IOException {
-        this.follower = drive.getFollower();
-        this.progressTracker = new ProgressTracker(follower, telemetry);
-
-        TurtleTracerReader reader = new TurtleTracerReader("AutoPath.turt", hw.appContext);
-
-        // Load poses
-        startPoint = reader.get("startPoint");
-        point1 = reader.get("point1");
-
-        follower.setStartingPose(startPoint);
-
-        buildPaths();
-
-        addCommands(
-          new InstantCommand(() -> {
-            progressTracker.setCurrentPath(startPointTOpoint1);
-            progressTracker.setCurrentPathName("startPointTOpoint1");
-          }),
-          new FollowPathCommand(follower, startPointTOpoint1)
-        );
-      }
-
-      public void buildPaths() {
-        startPointTOpoint1 = Paths.line(startPoint, point1)
-          .linear(
-            startPoint.heading(),
-            point1.heading()
-          );
-      }
-    }
-    ```
+    <GeneratedCode example="routine-solverslib" />
 
     ### Key Components
     -   **`SequentialCommandGroup`**: The base class for the entire routine.
-    -   **`TurtleTracerReader`**: Used to load named poses from the saved path file.
+    -   **`TurtleTracerReader`**: Used to load named poses from the saved path file, and to register each path's event markers.
+    -   **`ProgressTracker`**: Triggers the event markers. The `ParallelRaceGroup` runs `tracker.update()` while each path is followed.
     -   **`FollowPathCommand`**: A command from SolversLib that wraps the path following logic.
 
   </TabItem>
