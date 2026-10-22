@@ -1,7 +1,11 @@
 /*
- * Accent colors: the emerald shades Turtle Tracer itself uses (Tailwind's
- * emerald-100 to emerald-900). Starlight takes its accent from these three
- * variables, so setting them recolors links, buttons, tabs, and highlights.
+ * The docs use the same colors as the Turtle Tracer app, both Tailwind palettes:
+ *
+ * - Accent: emerald. Starlight takes its accent from the three accent
+ *   variables, so setting them recolors links, buttons, tabs, and highlights.
+ * - Backgrounds, borders, and text: neutral (pure gray), in place of
+ *   Starlight's blue-tinted grays. In dark mode the header and sidebar are
+ *   the darkest surface and the page is a step lighter, as in the app.
  */
 
 /* Dark theme (Starlight's default) */
@@ -9,6 +13,18 @@
   --sl-color-accent-low: #064e3b; /* emerald-900 */
   --sl-color-accent: #10b981; /* emerald-500 */
   --sl-color-accent-high: #6ee7b7; /* emerald-300 */
+
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #e5e5e5; /* neutral-200 */
+  --sl-color-gray-2: #d4d4d4; /* neutral-300, body text */
+  --sl-color-gray-3: #a3a3a3; /* neutral-400, muted text */
+  --sl-color-gray-4: #525252; /* neutral-600 */
+  --sl-color-gray-5: #404040; /* neutral-700, borders */
+  --sl-color-gray-6: #262626; /* neutral-800, cards and code */
+  --sl-color-black: #171717; /* neutral-900, the page, like the app's panels */
+  --sl-color-bg-nav: #0a0a0a; /* neutral-950, like the app's header */
+  --sl-color-bg-sidebar: #0a0a0a; /* neutral-950, like the app's sidebar */
+  --sl-color-backdrop-overlay: rgba(0, 0, 0, 0.66);
 }
 
 /* Light theme */
@@ -16,6 +32,20 @@
   --sl-color-accent-low: #d1fae5; /* emerald-100 */
   --sl-color-accent: #047857; /* emerald-700 */
   --sl-color-accent-high: #065f46; /* emerald-800 */
+
+  --sl-color-white: #171717; /* neutral-900, text */
+  --sl-color-gray-1: #262626; /* neutral-800 */
+  --sl-color-gray-2: #404040; /* neutral-700 */
+  --sl-color-gray-3: #525252; /* neutral-600 */
+  --sl-color-gray-4: #a3a3a3; /* neutral-400 */
+  --sl-color-gray-5: #d4d4d4; /* neutral-300 */
+  --sl-color-gray-6: #e5e5e5; /* neutral-200 */
+  --sl-color-gray-7: #f5f5f5; /* neutral-100 */
+  --sl-color-black: #ffffff;
+  /* The dark theme sets these above, so the light theme has to set them again. */
+  --sl-color-bg-nav: var(--sl-color-gray-7);
+  --sl-color-bg-sidebar: var(--sl-color-black);
+  --sl-color-backdrop-overlay: rgba(115, 115, 115, 0.66);
 }
 
 /* Hero title in the accent color */
