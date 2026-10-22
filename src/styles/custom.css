@@ -173,17 +173,9 @@
 .home-section--stacked .home-section__media > img {
   max-width: min(100%, 52rem);
   max-height: 36rem;
-  border: 1px solid var(--sl-color-hairline-light);
-  border-radius: 0.5rem;
 }
 
-/* No frame, for a screenshot with its own rounded edge; and room to be larger. */
-.home-section--stacked.home-section--unframed .home-section__media > img,
-.home-section--stacked.home-section--unframed .home-section__media .loop-video {
-  border: 0;
-  border-radius: 0;
-}
-
+/* A large screenshot gets the full width. */
 .home-section--stacked.home-section--large .home-section__media > img {
   max-width: 100%;
   max-height: 46rem;
@@ -191,9 +183,6 @@
 
 .home-section--stacked .home-section__media .loop-video {
   width: min(100%, 52rem, calc(36rem * var(--ratio)));
-  border: 1px solid var(--sl-color-hairline-light);
-  border-radius: 0.5rem;
-  overflow: hidden;
 }
 
 .home-columns {

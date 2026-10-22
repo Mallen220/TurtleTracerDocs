@@ -6,9 +6,7 @@
 //   screenshot on the right. Leave out `image` for a text-only section.
 // - "stacked": the heading and text centered, with the screenshot underneath.
 //
-// A stacked screenshot gets a thin frame. Pass `frame={false}` for one that
-// already has its own edge, such as a window with rounded corners on a
-// transparent background, and `large` to let it use the full width.
+// Pass `large` to let a stacked screenshot use the full width.
 //
 // Give `video` as well as `image` to show a looping video in the screenshot's
 // place once it can play. The image stays until then (see LoopVideo.astro).
@@ -21,7 +19,6 @@ interface Props {
   image?: ImageMetadata;
   alt?: string;
   layout?: "split" | "stacked";
-  frame?: boolean;
   large?: boolean;
   video?: {
     sources: { src: string; type: string }[];
@@ -30,7 +27,7 @@ interface Props {
   };
 }
 
-const { title, image, alt = "", layout = "split", frame = true, large = false, video } = Astro.props;
+const { title, image, alt = "", layout = "split", large = false, video } = Astro.props;
 const stacked = layout === "stacked";
 ---
 
@@ -40,7 +37,6 @@ const stacked = layout === "stacked";
     {
       "home-section--stacked": stacked,
       "home-section--text-only": !image,
-      "home-section--unframed": !frame,
       "home-section--large": large
     }
   ]}
