@@ -79,7 +79,28 @@ For more complex plugins, you can access internal registries and stores:
 
 #### Custom Actions and Command Libraries
 
-If your plugin registers an action that generates code for the sequential export, read `context.targetLibrary` (`"SolversLib"`, `"NextFTC"`, or `"Ivy"`) to see which command library the user picked. The older `context.isNextFTC` flag still works for existing plugins, but it is deprecated and can't tell Ivy from SolversLib. The `plugins/turtle.d.ts` type definitions in the Turtle Tracer repository list the current types.
+If your plugin registers an action that generates code for the sequential export, read `context.targetLibrary` (`"SolversLib"`, `"NextFTC"`, or `"Ivy"`) to see which command library the user picked. The older `context.isNextFTC` flag still works for existing plugins, but it is deprecated and can't tell Ivy from SolversLib.
+
+The same context has a `language` (`"java"` or `"kotlin"`). If your action's `toJavaCode` and `toSequentialCommand` write Kotlin when `context.language` is `"kotlin"`, set `supportsKotlin: true` on the action. Without it, Kotlin exports leave a `// TODO` comment in the action's place. See [Kotlin export](/turtle-tracer/exporting/#kotlin).
+
+The `plugins/turtle.d.ts` type definitions in the Turtle Tracer repository list the current types.
+
+#### Example: A Simple Exporter
+
+An exporter receives the project data (the same shape `getData()` returns) and returns a string. This one writes the route as CSV:
+
+```javascript
+turtle.registerExporter("Simple CSV", (data) => {
+  let csv = "Name,X,Y\n";
+  csv += `Start,${data.startPoint.x},${data.startPoint.y}\n`;
+  for (const line of data.lines) {
+    csv += `${line.name},${line.endPoint.x},${line.endPoint.y}\n`;
+  }
+  return csv;
+});
+```
+
+The Turtle Tracer repository includes a fuller version, `plugins/Example-csv-exporter.ts`.
 
 ### Example: Adding a Button
 
