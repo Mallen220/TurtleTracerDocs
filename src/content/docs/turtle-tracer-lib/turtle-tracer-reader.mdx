@@ -78,7 +78,14 @@ Poses are Pedro field coordinates, the same numbers TurtleTracer writes into gen
 - **Control points**: Bézier control points are named `<line>_line<index>_control<n>`, for example `greg_line1_control1`, so two lines with the same name don't overwrite each other. The older `<line>_control<n>` form still returns the first line with that name.
 - **Missing names**: `get()` returns `null` if no pose has that name.
 
-You can also read everything the file holds: `getAllPoses()`, `getStartPoint()`, `getLines()`, `getSequence()`, `getShapes()`, `getHeader()`, and `getVersion()`.
+You can also read everything the file holds: `getAllPoses()`, `getStartPoint()`, `getLines()`, `getSequence()`, `getShapes()`, `getHeader()`, and `getVersion()`. For example, this prints each path's name and end point to the Driver Station:
+
+```java
+for (TurtleTracerReader.TurtleTurt.Line line : reader.getLines()) {
+    telemetry.addData(line.name, "(%.1f, %.1f)", line.endPoint.x, line.endPoint.y);
+}
+telemetry.update();
+```
 
 :::caution[Poses no longer rotate (v3.0.3)]
 Before v3.0.3 the reader rotated points by 90°, so `toPose(x, y, deg)` returned `new Pose(y, 144 - x, deg - 90)`. It now returns `new Pose(x, y, Math.toRadians(deg))`. A routine read from a `.turt` file now places the robot where the same routine with embedded poses does.
@@ -95,7 +102,7 @@ import com.pedropathing.api.Paths;
 import com.pedropathing.paths.Path;
 
 // ...
-follower.setStartingPose(startPoint);
+follower.setPose(startPoint);
 
 Path startPointTOpoint1 = Paths.line(startPoint, point1)
     .linear(startPoint.heading(), point1.heading());
