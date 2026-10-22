@@ -36,6 +36,13 @@ public void init() {
 }
 ```
 
+The names must match the event markers you placed in TurtleTracer. For a routine with `SpinUp` and `Intake` markers, the generated code looks the commands up by name, so register both before the routine is built:
+
+```java
+NamedCommands.registerCommand("SpinUp", () -> shooter.spinUp());
+NamedCommands.registerCommand("Intake", () -> intake.start());
+```
+
 ### Supported Platforms
 
 The `NamedCommands` system exclusively uses standard Java `Runnable` interfaces, making it highly compatible:
