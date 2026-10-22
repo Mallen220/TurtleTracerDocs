@@ -16,6 +16,8 @@ The path editor allows you to create complex autonomous routines using Bezier cu
 
 Each path segment has a dedicated panel with several controls:
 
+![The Paths tab, showing the starting point and an expanded path panel with its name, target position, heading mode, control points, and the Insert after buttons.](../../../assets/screenshots/paths-panel.png)
+
 - **Expand/Collapse**: Click the arrow or path name to show or hide details.
 - **Renaming**: Click the name to rename. **Tip:** Paths with the **same name** are "linked" — moving one automatically moves the others.
 - **Locking**: Click the **Lock Icon** to prevent accidental edits to a path.
@@ -36,17 +38,30 @@ Inside an expanded panel, you can precisely configure the endpoint:
 
 The **Control Points** section allows you to shape the Bezier curve:
 
-- **Add/Remove**: Click **Add Control Point** to create complex curves. Use the trash icon to remove them.
+- **Add/Remove**: Click **Add Point** in the Control Point row to create complex curves. Use the trash icon to remove them.
 - **Precise Editing**: Enter exact X/Y coordinates for every control point.
 - **Reorder**: Drag and drop control points in the list to change their order of influence.
 
 ## Panel Actions
 
-At the top right of each path panel:
+At the top right of each path panel, next to the color circle:
 
-- **Insert Point**: Click the **Plus (+)** icon to insert a new path segment after the current one.
-- **Add Wait**: Click the **Clock** icon to insert a stop/wait command.
-- **Delete**: Click the **Trash** icon to remove the path segment.
+- **Eye**: Hide the path on the field, or show it again.
+- **Lock**: Prevent accidental edits to the path.
+- **Up/Down Arrows**: Move the path earlier or later in the sequence.
+- **Trash**: Remove the path.
+
+At the bottom of the panel, the **Insert after:** row adds a step right after this path:
+
+- **+ Path**: Insert a new path.
+- **+ Wait**: Insert a stop/wait command.
+- **+ Rotate**: Insert a turn in place.
+
+## Table View
+
+The **Table** tab lists the whole sequence in one place: the start point, every path with its control points, and any waits and rotations. Edit coordinates and durations inline, drag the handle to reorder rows, or right-click a row for more actions. **Add Path**, **Add Wait**, and **Add Rotate** at the bottom add a step to the end. **Copy Table** puts the sequence on your clipboard as Markdown.
+
+![The Table tab, listing the start point, three paths (the third with one control point), and a wait named FlowerPower.](../../../assets/screenshots/table-panel.png)
 
 ## Keyboard Shortcuts
 
