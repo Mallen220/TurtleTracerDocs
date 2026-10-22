@@ -1,0 +1,45 @@
+---
+// A code example that Turtle Tracer generated, with a tab for each language it
+// exists in. The files in src/examples are written by `npm run docs:examples`
+// in the TurtleTracer repository, so don't edit them here.
+import { Code, TabItem, Tabs } from "@astrojs/starlight/components";
+
+interface Props {
+  /** The example's file name without its extension, such as "routine-opmode". */
+  example: string;
+}
+
+const { example } = Astro.props;
+
+const LANGUAGES = [
+  { label: "Java", extension: "java", lang: "java" },
+  { label: "Kotlin", extension: "kt", lang: "kotlin" },
+];
+
+const files = import.meta.glob<string>("../examples/*", {
+  query: "?raw",
+  import: "default",
+  eager: true,
+});
+
+const tabs = LANGUAGES.flatMap((language) => {
+  const code = files[`../examples/${example}.${language.extension}`];
+  return code ? [{ ...language, code }] : [];
+});
+
+if (tabs.length === 0) {
+  throw new Error(
+    `No generated example named "${example}" in src/examples. Run "npm run docs:examples" in the TurtleTracer repository.`,
+  );
+}
+---
+
+<Tabs syncKey="code-language">
+  {
+    tabs.map((tab) => (
+      <TabItem label={tab.label}>
+        <Code code={tab.code} lang={tab.lang} />
+      </TabItem>
+    ))
+  }
+</Tabs>
