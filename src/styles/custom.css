@@ -1,13 +1,24 @@
+/*
+ * Accent colors: the emerald shades Turtle Tracer itself uses (Tailwind's
+ * emerald-100 to emerald-900). Starlight takes its accent from these three
+ * variables, so setting them recolors links, buttons, tabs, and highlights.
+ */
+
+/* Dark theme (Starlight's default) */
 :root {
-  --sl-hue-accent: 170;
-  --sl-saturation-accent: 80%;
+  --sl-color-accent-low: #064e3b; /* emerald-900 */
+  --sl-color-accent: #10b981; /* emerald-500 */
+  --sl-color-accent-high: #6ee7b7; /* emerald-300 */
 }
 
-/* Custom gradient for hero title */
+/* Light theme */
+:root[data-theme="light"] {
+  --sl-color-accent-low: #d1fae5; /* emerald-100 */
+  --sl-color-accent: #047857; /* emerald-700 */
+  --sl-color-accent-high: #065f46; /* emerald-800 */
+}
+
+/* Hero title in the accent color */
 .hero > .stack > .copy > h1 {
-  background: linear-gradient(to right, #6ee7b7, #0ea5e9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  color: transparent;
+  color: var(--sl-color-text-accent);
 }
