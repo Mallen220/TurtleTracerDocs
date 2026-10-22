@@ -16,8 +16,11 @@ The `TurtleTracerLiveView` class is a utility that allows you to broadcast your 
 
 - **Port:** 8888
 - **Protocol:** TCP
-- **Format:** JSON `{"x": <x>, "y": <y>, "heading": <heading>}`
+- **Format:** One JSON object per line (newline-delimited): `{"x": <x>, "y": <y>, "heading": <heading>}`
+- **Units:** `x` and `y` are inches in Pedro Pathing field coordinates, the same ones Turtle Tracer uses. `heading` is in radians.
 - **Update Rate:** ~20Hz (50ms interval)
+
+If your pose provider throws (for example because the hardware was closed), the server sends `{"error": "provider_error"}` instead of a pose and keeps the connection open.
 
 ## Usage
 
@@ -35,6 +38,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.turtletracerlib.TurtleTracerLiveView;
+import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 @Autonomous(name = "Example Auto with Live View")
 public class ExampleAuto extends LinearOpMode {
@@ -43,7 +47,7 @@ public class ExampleAuto extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Initialize your Follower as usual
-        follower = new Follower(hardwareMap);
+        follower = Constants.create(hardwareMap);
 
         // 1. Start the Live View server
         TurtleTracerLiveView.getInstance().start();
@@ -89,7 +93,7 @@ public class MecanumDrive extends SubsystemBase {
     private final Follower follower;
 
     public MecanumDrive(HardwareMap hardwareMap) {
-        follower = new Follower(hardwareMap);
+        follower = Constants.create(hardwareMap);
 
         // Start and link Live View in the constructor
         TurtleTracerLiveView.getInstance().start();
@@ -185,7 +189,10 @@ TurtleTracerLiveView.getInstance().setPoseProvider(() -> {
 Once your robot is running the OpMode:
 
 1. Ensure your computer is connected to the robot's Wi-Fi network.
-2. Open the **TurtleTracer**.
-3. The visualizer should automatically detect the broadcast if configured, or you may need to use a compatible plugin/client to connect to the robot's IP address on port `8888`.
+2. Open the **TurtleTracer** desktop app. Connecting to a robot needs the desktop app; the browser version cannot open the socket.
+3. Open the **Telemetry** tab in the control panel. If it is missing, turn on **Show Live Telemetry Tab** in Settings > General.
+4. Choose **TCP (TurtleTracerLib)**, enter the Robot Controller's IP address and port `8888`, then click **Connect**. The defaults are `192.168.43.1` (the Control Hub's own Wi-Fi network) and `8888`.
+
+Once the status reads `CONNECTED`, the live robot is drawn on the field and its values appear in the **Telemetry Data** table. The tab also supports **WebSocket (Panels)**, which defaults to port `8082`; that mode is for Panels and doesn't use `TurtleTracerLiveView`.
 
 > **Note:** Ensure your firewall allows connections on port 8888.
