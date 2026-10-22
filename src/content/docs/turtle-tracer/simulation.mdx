@@ -50,6 +50,8 @@ When paths are chained, the robot doesn't stop at the join. Turtle Tracer simula
 - The Table counts the swing in the time of the path it leads onto. The speed tooltip and heatmap skip the part of a path the robot doesn't drive.
 - Sharp corners, and corners where the robot misses the join point, get a warning. See [Path Validation](/turtle-tracer/validation/#5-chain-corner-chained-corners).
 
+![A chained corner on the field. The dashed line is the robot's route: it carries on past the join, swings out, and steers back onto the next path.](../../../assets/screenshots/chained-corner.png)
+
 How hard the robot steers back depends on the **Pedro Pathing Version**, **Translational P**, and **Path Settle Time** settings. Match them to your robot's values.
 
 ## Verification Tools
@@ -62,4 +64,6 @@ Ensure your path is safe and efficient:
 
 ---
 
-_Tip: Use the **Stats** button to see the total estimated duration and distance of your routine._
+## Path Statistics
+
+Use the **Stats** button to see the total estimated duration and distance of your routine, with timing, length, and peak speed for each segment. The **Graphs** tab plots velocity and acceleration, and **Insights** lists warnings such as wheel slip and chained corners.
