@@ -41,7 +41,7 @@ public class MyAuto extends OpMode {
 
     @Override
     public void init() {
-        follower = new Follower(hardwareMap);
+        follower = Constants.create(hardwareMap);
         // ...
         progressTracker = new ProgressTracker(follower, telemetry);
     }
@@ -144,6 +144,34 @@ progressTracker.clearPathEvents();
 progressTracker.onParametric(0.5, () -> arm.lift());
 progressTracker.setCurrentPath(nextPath);
 ```
+
+### Example: Several Paths in a Row
+
+TurtleTracer's Java export uses these methods in its state machine. Each time a path starts, the previous path's events are cleared, that path's events are registered, and the new path is set:
+
+```java
+case 0:
+  follower.follow(paths.DriveToShoot);
+  tracker.clearPathEvents();
+  tracker.onParametric(0, 0.400, NamedCommands.getCommand("SpinUp"));
+  tracker.setCurrentPath(paths.DriveToShoot);
+  setPathState(1);
+  break;
+case 1:
+  if (!follower.isBusy()) {
+    setPathState(2);
+  }
+  break;
+case 2:
+  follower.follow(paths.ReturnToShoot);
+  tracker.clearPathEvents();
+  tracker.onParametric(0, 0.500, NamedCommands.getCommand("Intake"));
+  tracker.setCurrentPath(paths.ReturnToShoot);
+  setPathState(3);
+  break;
+```
+
+Call `tracker.update()` in your `loop()` alongside `follower.update()`.
 
 When you load events from a `.turt` file, `TurtleTracerReader.registerLineEvents(...)` does the registering for one line. See [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/#5-routines-with-several-paths).
 
