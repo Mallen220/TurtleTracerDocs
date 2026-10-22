@@ -52,3 +52,167 @@
 .hero > .stack > .copy > h1 {
   color: var(--sl-color-text-accent);
 }
+
+/*
+ * Homepage (see components/HomeSection.astro). Sections are separated by a
+ * thin line. The default is a row with a little text on the left and a
+ * screenshot on the right, which stacks on narrow screens. The "stacked"
+ * variant centers the text above its screenshot. Images are capped in height
+ * so a square screenshot doesn't dwarf its text.
+ */
+:root[data-has-hero] .hero {
+  padding-bottom: 1rem;
+}
+
+.home-note {
+  margin-top: 0;
+  text-align: center;
+  color: var(--sl-color-gray-3);
+}
+
+.home-shot {
+  margin: 2rem 0 0;
+}
+
+/*
+ * Looping videos (components/LoopVideo.astro). The box is fixed at the video's
+ * shape (--ratio, set by the component) so the page doesn't move when the video
+ * takes over from its image. A video can be transparent, so the image is
+ * hidden, not covered, once it plays.
+ */
+.loop-video {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--ratio, 16 / 9);
+}
+
+.loop-video__poster,
+.loop-video__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.loop-video__video {
+  visibility: hidden;
+}
+
+.loop-video.is-playing .loop-video__video {
+  visibility: visible;
+}
+
+.loop-video.is-playing .loop-video__poster {
+  visibility: hidden;
+}
+
+.home-section {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  gap: 3rem;
+  align-items: center;
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px solid var(--sl-color-hairline);
+}
+
+.home-section--text-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.home-section--text-only .home-section__text > p {
+  max-width: 36rem;
+}
+
+.home-section__text > h2 {
+  margin-top: 0;
+}
+
+.home-section__media {
+  margin: 0;
+}
+
+.home-section__media > img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 30rem;
+  margin-inline: auto;
+}
+
+/* A video in a section is held to the same height as a screenshot would be. */
+.home-section__media .loop-video {
+  width: min(100%, calc(30rem * var(--ratio)));
+  margin-inline: auto;
+}
+
+/* Stacked sections: centered text with the screenshot underneath. */
+.home-section--stacked {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: 2rem;
+  padding-top: 4rem;
+  text-align: center;
+}
+
+.home-section--stacked .home-section__text {
+  max-width: 38rem;
+  text-wrap: balance;
+}
+
+.home-section--stacked .home-section__text > h2 {
+  font-size: var(--sl-text-4xl);
+}
+
+.home-section--stacked .home-section__media {
+  width: 100%;
+}
+
+.home-section--stacked .home-section__media > img {
+  max-width: min(100%, 52rem);
+  max-height: 36rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.5rem;
+}
+
+/* No frame, for a screenshot with its own rounded edge; and room to be larger. */
+.home-section--stacked.home-section--unframed .home-section__media > img,
+.home-section--stacked.home-section--unframed .home-section__media .loop-video {
+  border: 0;
+  border-radius: 0;
+}
+
+.home-section--stacked.home-section--large .home-section__media > img {
+  max-width: 100%;
+  max-height: 46rem;
+}
+
+.home-section--stacked .home-section__media .loop-video {
+  width: min(100%, 52rem, calc(36rem * var(--ratio)));
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.home-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 2rem;
+}
+
+.home-columns > div {
+  margin-top: 0;
+}
+
+.home-columns > div > :first-child {
+  margin-top: 0;
+}
+
+@media (max-width: 50rem) {
+  .home-section {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+}

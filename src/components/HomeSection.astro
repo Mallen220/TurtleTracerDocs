@@ -1,0 +1,68 @@
+---
+// One section of the homepage. The layout is in src/styles/custom.css, under
+// "Homepage".
+//
+// - "split" (default): a heading and a few short lines on the left, a
+//   screenshot on the right. Leave out `image` for a text-only section.
+// - "stacked": the heading and text centered, with the screenshot underneath.
+//
+// A stacked screenshot gets a thin frame. Pass `frame={false}` for one that
+// already has its own edge, such as a window with rounded corners on a
+// transparent background, and `large` to let it use the full width.
+//
+// Give `video` as well as `image` to show a looping video in the screenshot's
+// place once it can play. The image stays until then (see LoopVideo.astro).
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+import LoopVideo from "./LoopVideo.astro";
+
+interface Props {
+  title: string;
+  image?: ImageMetadata;
+  alt?: string;
+  layout?: "split" | "stacked";
+  frame?: boolean;
+  large?: boolean;
+  video?: {
+    sources: { src: string; type: string }[];
+    width: number;
+    height: number;
+  };
+}
+
+const { title, image, alt = "", layout = "split", frame = true, large = false, video } = Astro.props;
+const stacked = layout === "stacked";
+---
+
+<section
+  class:list={[
+    "home-section",
+    {
+      "home-section--stacked": stacked,
+      "home-section--text-only": !image,
+      "home-section--unframed": !frame,
+      "home-section--large": large
+    }
+  ]}
+>
+  <div class="home-section__text">
+    <h2>{title}</h2>
+    <slot />
+  </div>
+  {
+    image && (
+      <div class="home-section__media">
+        {video ? (
+          <LoopVideo poster={image} alt={alt} {...video} />
+        ) : (
+          <Image
+            src={image}
+            alt={alt}
+            widths={[480, 720, 1040, 1440, 2160]}
+            sizes={large ? "(min-width: 72rem) 67.5rem, 100vw" : stacked ? "(min-width: 56rem) 52rem, 100vw" : "(min-width: 50rem) 40rem, 100vw"}
+          />
+        )}
+      </div>
+    )
+  }
+</section>

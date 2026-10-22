@@ -1,57 +1,192 @@
 ---
 title: Turtle Tracer
-description: Turtle Tracer (TurtleTracer) documentation for FTC autonomous path planning and trajectory generation.
+description: Plan FTC autonomous routes on the field, simulate them with your robot's numbers, and export Java or Kotlin code. Built for Pedro Pathing.
 head:
   - tag: meta
     attrs:
       name: keywords
-      content: FTC, FIRST Tech Challenge, TurtleTracer, Turtle Tracer, TurtleTracerLib, autonomous, trajectory generation, path planning, robotics
+      content: FTC, FIRST Tech Challenge, TurtleTracer, Turtle Tracer, TurtleTracerLib, autonomous, path planning, Pedro Pathing, robotics
 template: splash # Remove or comment out this line to display the site sidebar on this page.
 hero:
-  tagline: Advanced Autonomous Pathing for FTC
-  image:
-    file: ../../assets/icon.png
+  tagline: Draw your FTC autonomous on the field, watch your robot drive it, and export the code.
   actions:
-    - text: Get Started
-      link: /turtle-tracer-lib/installation/
-      icon: rocket
+    - text: Get started
+      link: /turtle-tracer/getting-started/
       variant: primary
-    - text: GitHub (TurtleTracerLib)
-      link: https://github.com/Mallen220/TurtleTracerLib
+    - text: Open in your browser
+      link: https://live.turtletracer.com
       icon: external
-      variant: minimal
-    - text: GitHub (TurtleTracer)
+      variant: secondary
+    - text: GitHub
       link: https://github.com/Mallen220/TurtleTracer
       icon: external
       variant: minimal
 ---
 
-import { Card, CardGrid } from "@astrojs/starlight/components";
+import HomeSection from "../../components/HomeSection.astro";
+import LoopVideo from "../../components/LoopVideo.astro";
+import workspace from "../../assets/screenshots/workspace.png";
+import homeWebm from "../../assets/home-video.webm";
+import homeHevc from "../../assets/home-video-hevc.mov";
+import pathFollowing from "../../assets/path-following.mp4";
+import pathsPanel from "../../assets/screenshots/paths-panel.png";
+import chainedCorner from "../../assets/screenshots/chained-corner.png";
+import validation from "../../assets/screenshots/validation.png";
+import exportJava from "../../assets/screenshots/export-java.png";
 
-## Key Features
+<p class="home-note">
+  Built for FTC robots that use{" "}
+  <a href="https://pedropathing.com">Pedro Pathing</a>. Runs on macOS, Windows,
+  Linux, and in your browser.
+</p>
 
-<CardGrid stagger>
-  <Card title="Advanced Pathing" icon="rocket">
-    Implement precise and fast autonomous routines with our state-of-the-art
-    path following algorithms.
-  </Card>
-  <Card title="Visualizer Integration" icon="pencil">
-    Design your paths visually using
-    [TurtleTracer](https://github.com/Mallen220/TurtleTracer) and export
-    directly to your code.
-  </Card>
-  <Card title="Easy Setup" icon="setting">
-    Simple Gradle integration gets you up and running quickly. Check out the
-    [Installation Guide](/turtle-tracer-lib/installation/).
-  </Card>
-  <Card title="Open Source" icon="github">
-    Join our community of developers and contributors. [View on
-    GitHub](https://github.com/Mallen220/TurtleTracerLib).
-  </Card>
-</CardGrid>
+<figure class="home-shot">
+  <LoopVideo
+    poster={workspace}
+    alt="A recording of Turtle Tracer: paths and waits being added to a route on the field, with the Paths panel on the right and the playback timeline at the bottom."
+    sources={[
+      { src: homeHevc, type: 'video/quicktime; codecs="hvc1"' },
+      { src: homeWebm, type: "video/webm" },
+    ]}
+    width={1280}
+    height={720}
+  />
+</figure>
 
-## Getting Started
+<HomeSection
+  title="Draw the route"
+  layout="stacked"
+  image={pathsPanel}
+  alt="The Paths tab, showing the starting point and an expanded path panel with its name, target position, heading mode, control points, and the Insert after buttons."
+>
 
-To start using TurtleTracerLib, follow our [Installation Guide](/turtle-tracer-lib/installation/).
+Click the field to add a path, then drag the points to shape the curve.
 
-For visual path editing, refer to the [TurtleTracer documentation](/turtle-tracer/getting-started/).
+Choose how the robot faces on each path.
+
+[Path Editing](/turtle-tracer/path-editing/)
+
+</HomeSection>
+
+<HomeSection
+  title="Watch it drive"
+  layout="stacked"
+  image={chainedCorner}
+  alt="The field as the robot drives a route, with the view following the robot. Dashed lines show where it carries on past a chained corner, swings out, and steers back onto the next path."
+  video={{
+    sources: [{ src: pathFollowing, type: "video/mp4" }],
+    width: 1260,
+    height: 1254,
+  }}
+>
+
+Press `Space` and the robot drives your route, timed with your robot's speed and braking.
+
+Chained paths swing wide at the join, the way Pedro drives them.
+
+[Simulation & Playback](/turtle-tracer/simulation/)
+
+</HomeSection>
+
+<HomeSection
+  title="Catch problems early"
+  layout="stacked"
+  image={validation}
+  alt="Validation markers on the field: a red stretch where the path runs into an obstacle, a yellow marker at a chained corner, and a magenta marker at a zero-length segment."
+>
+
+Validation marks paths that hit an obstacle or leave the field.
+
+The optimizer can find a faster way around.
+
+[Path Validation](/turtle-tracer/validation/) and [Path Optimization](/turtle-tracer/optimization/)
+
+</HomeSection>
+
+<HomeSection
+  title="Export the code"
+  layout="stacked"
+  frame={false}
+  large
+  image={exportJava}
+  alt="The Export Java Code dialog, with the package name, the Generate Full Class option, code units, and a code preview."
+>
+
+Java or Kotlin, as a plain OpMode or for SolversLib, NextFTC, or Ivy.
+
+Event markers run your robot's actions at exact points along a path.
+
+[Exporting Code](/turtle-tracer/exporting/)
+
+</HomeSection>
+
+<HomeSection title="See it on the real robot">
+
+TurtleTracerLib sends your robot's position to the app over Wi-Fi, so you can watch it on the field.
+
+Import a log from a run to compare it with your plan.
+
+[Live View](/turtle-tracer-lib/live-view/) and [Telemetry Overlay](/turtle-tracer/telemetry/)
+
+</HomeSection>
+
+<HomeSection title="Install">
+
+<div class="home-columns">
+<div>
+
+**Desktop app**
+
+macOS, Windows, and Linux.
+
+[Install](/turtle-tracer/installation/)
+
+</div>
+<div>
+
+**Browser**
+
+Nothing to install, with some limits.
+
+[Open Turtle Tracer](https://live.turtletracer.com) or read [Browser Support](/turtle-tracer/browser/)
+
+</div>
+<div>
+
+**TurtleTracerLib**
+
+For your robot project.
+
+[Add the library](/turtle-tracer-lib/installation/)
+
+</div>
+</div>
+
+</HomeSection>
+
+<HomeSection title="Where to go next">
+
+<div class="home-columns">
+<div>
+
+**The app**
+
+- [Getting Started](/turtle-tracer/getting-started/)
+- [Controls & Shortcuts](/turtle-tracer/controls/)
+- [Settings](/turtle-tracer/settings/)
+- [Troubleshooting & FAQ](/turtle-tracer/troubleshooting/)
+
+</div>
+<div>
+
+**The library**
+
+- [Getting Started](/turtle-tracer-lib/getting-started/)
+- [Named Commands & Events](/turtle-tracer-lib/named-commands/)
+- [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/)
+- [Live View](/turtle-tracer-lib/live-view/)
+
+</div>
+</div>
+
+</HomeSection>

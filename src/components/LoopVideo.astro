@@ -1,0 +1,102 @@
+---
+// A silent video that loops, shown in place of a still image once it can play.
+// Until then (and if it never can: autoplay blocked, a load error, no JavaScript,
+// or a visitor who asked for reduced motion) the image stays. The video may be
+// transparent, so the image is hidden, not left underneath, when it takes over.
+//
+// `sources` are tried in order, so list the best first. Transparent video needs
+// two encodings: HEVC with alpha for Safari, listed first because Safari would
+// otherwise take the WebM and draw its alpha as black, and VP9 WebM with alpha
+// for everything else. An ordinary video needs just one MP4. The layout is in
+// src/styles/custom.css, under "Homepage".
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  /** Shown until the video can play. */
+  poster: ImageMetadata;
+  /** Describes the video for everyone, since the image is hidden once it plays. */
+  alt: string;
+  sources: { src: string; type: string }[];
+  /** The video's size in pixels, which sets the shape of its box. */
+  width: number;
+  height: number;
+}
+
+const { poster, alt, sources, width, height } = Astro.props;
+---
+
+<div
+  class="loop-video"
+  data-loop-video
+  role="img"
+  aria-label={alt}
+  style={`--ratio: ${width / height}`}
+>
+  <Image
+    class="loop-video__poster"
+    src={poster}
+    alt=""
+    widths={[720, 1080, 1440]}
+    sizes="(min-width: 72rem) 67.5rem, 100vw"
+    loading="eager"
+  />
+  <video
+    class="loop-video__video"
+    muted
+    loop
+    playsinline
+    preload="none"
+    aria-hidden="true"
+    tabindex="-1"
+  >
+    {sources.map((source) => <source src={source.src} type={source.type} />)}
+  </video>
+</div>
+
+<script>
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  // Start loading a video when it is near the screen, and pause it while it is
+  // scrolled out of view, so a video further down the page costs nothing until
+  // someone gets there.
+  function start(root: HTMLElement, video: HTMLVideoElement) {
+    // Swap only once the video is really playing.
+    video.addEventListener(
+      "canplaythrough",
+      () => {
+        video
+          .play()
+          .then(() => root.classList.add("is-playing"))
+          .catch(() => {});
+      },
+      { once: true },
+    );
+    video.preload = "auto";
+    video.load();
+  }
+
+  if (!reducedMotion.matches) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const root = entry.target as HTMLElement;
+          const video = root.querySelector("video");
+          if (!video) continue;
+          if (entry.isIntersecting) {
+            if (root.dataset.started) {
+              if (root.classList.contains("is-playing")) video.play().catch(() => {});
+            } else {
+              root.dataset.started = "true";
+              start(root, video);
+            }
+          } else if (root.classList.contains("is-playing")) {
+            video.pause();
+          }
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    document.querySelectorAll<HTMLElement>("[data-loop-video]").forEach((root) => observer.observe(root));
+  }
+</script>
