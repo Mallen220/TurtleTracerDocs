@@ -41,6 +41,16 @@ Piecewise heading allows you to divide a single path segment into multiple small
 
 ---
 
+## Prev: starting from the heading before
+
+A linear **Start** angle, a constant angle, a chain's global heading and any piecewise segment can be left blank. The field then shows **Prev**, and the path starts at whatever heading the robot has when it gets there: where the path before it ended, or what a Rotate step left it facing. Hover the field to see the angle it stands for.
+
+- Prev follows the sequence order, so reordering paths changes what it stands for.
+- A piecewise segment that is blank starts where the segment before it ended. The first segment starts from the heading before the path.
+- If the first path starts at Prev there is nothing before it, so the starting point gets its own heading to set, and the path starts from that.
+- In a macro, Prev starts from the heading before the macro, wherever it is placed.
+- Exported code writes the heading Prev stands for as a number, worked out from the planned paths. Reading that code back in gives you the numbers, not Prev.
+
 ## Chained Paths
 
 In Turtle Tracer, **Chained Paths** refer to multiple path segments linked together into a single sequence item. Instead of stopping and starting a new sequence item for each segment, chained paths allow the robot to transition smoothly from one curve or straightaway to the next.
