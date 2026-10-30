@@ -1,0 +1,98 @@
+---
+title: Named Commands in OpMode Exports
+description: Register your named commands from an exported Java or Kotlin OpMode with the Command Registrar, so you never edit the generated file.
+head:
+  - tag: meta
+    attrs:
+      name: keywords
+      content: TurtleTracerLib, NamedCommands, event markers, FTC, robotics, Command Registrar, OpMode export, init, register commands, Kotlin
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+An OpMode export is the OpMode itself, so there is no robot container to hold your commands. Instead, Turtle Tracer has an optional **Command Registrar**. You name one method of yours, and the exported `init()` calls it. The call is written again on each export, so you never edit the generated file.
+
+For command-group exports, see [RobotContainer & Command Groups](/turtle-tracer-lib/named-commands/robot-container/). The Command Registrar isn't used there.
+
+## 1. Write a registration method
+
+Make a class in your own code, outside the generated file, with a static method that takes the `HardwareMap`:
+
+<Tabs syncKey="code-language">
+  <TabItem label="Java">
+
+```java
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.turtletracerlib.pathing.NamedCommands;
+
+public class RobotCommands {
+
+  public static void register(HardwareMap hardwareMap) {
+    Shooter shooter = new Shooter(hardwareMap); // your own classes
+    Intake intake = new Intake(hardwareMap);
+
+    NamedCommands.registerCommand("SpinUp", () -> shooter.spinUp());
+    NamedCommands.registerCommand("Intake", () -> intake.start(), "Starts the intake motor");
+  }
+}
+```
+
+  </TabItem>
+  <TabItem label="Kotlin">
+
+```kotlin
+package org.firstinspires.ftc.teamcode
+
+import com.qualcomm.robotcore.hardware.HardwareMap
+import com.turtletracerlib.pathing.NamedCommands
+
+object RobotCommands {
+
+    @JvmStatic
+    fun register(hardwareMap: HardwareMap) {
+        val shooter = Shooter(hardwareMap) // your own classes
+        val intake = Intake(hardwareMap)
+
+        NamedCommands.registerCommand("SpinUp") { shooter.spinUp() }
+        NamedCommands.registerCommand("Intake", { intake.start() }, "Starts the intake motor")
+    }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+The method can have any name, but it must be `static` (in Kotlin, an `object` function with `@JvmStatic`, or a top-level function) and take one `HardwareMap`. The third argument to `registerCommand` is an optional description that shows up when you [list the registered commands](/turtle-tracer-lib/named-commands/reference/#debugging).
+
+## 2. Tell Turtle Tracer about it
+
+Enter the class and method in the **Command Registrar (optional)** field:
+
+- In the export dialog: open **Export → Java Code** (or **Kotlin Code**), click **Options**, and fill in **Command Registrar**.
+- In [Settings → Code Export](/turtle-tracer/settings/#code-export), under **OpMode Class**, if you want it used for auto export too.
+
+```text
+org.firstinspires.ftc.teamcode.RobotCommands.register
+```
+
+Write the fully qualified class name, then `.`, then the method name. A trailing `;` or `(hardwareMap)` that you type is ignored. Under the field, the dialog shows what it will add, such as `register(hardwareMap);`. If the text isn't a class and a method, the dialog says so, and nothing is written.
+
+## 3. Export
+
+The generated `init()` calls your method right after the follower is created, before any path is built. It's written with the full class name, so it needs no `import`, and only when the path has event markers.
+
+```java
+follower = Constants.create(hardwareMap);
+follower.setPose(p.of(9.000, 25.000, 0.000));
+
+org.firstinspires.ftc.teamcode.RobotCommands.register(hardwareMap); // Team's named commands
+
+pathTimer = new ElapsedTime();
+paths = new Paths(follower); // Build paths
+```
+
+## Not using the Command Registrar
+
+The field is optional. Leave it empty and the generated code makes no registration call. You then register the commands yourself, in the first place that runs before the paths start. The simplest is to edit `init()`, but the next export overwrites your edit, which is why the Command Registrar exists. If you export a Paths-only snippet (**Generate Full Class** off), there is no `init()` at all, and registering is entirely up to you.

@@ -1,0 +1,223 @@
+---
+title: RobotContainer & Command Groups
+description: Register named commands in a RobotContainer, then create your exported SolversLib, NextFTC, or Ivy command group after them.
+head:
+  - tag: meta
+    attrs:
+      name: keywords
+      content: TurtleTracerLib, NamedCommands, event markers, FTC, robotics, RobotContainer, command group, SequentialCommandGroup, SolversLib, NextFTC, Ivy, register commands
+---
+
+import { Tabs, TabItem } from "@astrojs/starlight/components";
+
+## Using a RobotContainer
+
+If your project has a `RobotContainer` (a class that creates your subsystems), it is a good place to register named commands. It already has the subsystems the commands need, and every OpMode can share it.
+
+<Tabs syncKey="code-language">
+  <TabItem label="Java">
+
+```java
+public class RobotContainer {
+
+  private final Shooter shooter;
+  private final Intake intake;
+
+  public RobotContainer(HardwareMap hardwareMap) {
+    shooter = new Shooter(hardwareMap); // your own classes
+    intake = new Intake(hardwareMap);
+    registerNamedCommands();
+  }
+
+  private void registerNamedCommands() {
+    NamedCommands.registerCommand("SpinUp", () -> shooter.spinUp());
+    NamedCommands.registerCommand("Intake", () -> intake.start());
+  }
+}
+```
+
+  </TabItem>
+  <TabItem label="Kotlin">
+
+```kotlin
+class RobotContainer(hardwareMap: HardwareMap) {
+
+    private val shooter = Shooter(hardwareMap) // your own classes
+    private val intake = Intake(hardwareMap)
+
+    init {
+        registerNamedCommands()
+    }
+
+    private fun registerNamedCommands() {
+        NamedCommands.registerCommand("SpinUp") { shooter.spinUp() }
+        NamedCommands.registerCommand("Intake") { intake.start() }
+    }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+Then create the container before the generated class:
+
+- For a command-based export, see [Sequential Command Exports](#sequential-command-exports).
+- For an OpMode export, point the [Command Registrar](/turtle-tracer-lib/named-commands/opmode-exports/) at a method that creates the container:
+
+  ```java
+  public class RobotCommands {
+    public static void register(HardwareMap hardwareMap) {
+      new RobotContainer(hardwareMap);
+    }
+  }
+  ```
+
+Any project layout works as long as the commands are registered before the generated code runs.
+
+:::caution
+`registerCommand` takes a `Runnable`, not a command from your library. Passing a library command, such as SolversLib's `new InstantCommand(...)`, doesn't compile. Write a lambda instead: `() -> intake.start()`.
+:::
+
+### Commands that are more than a method call
+
+A registered command is a plain `Runnable`, so it can start a command from your command library. Schedule it rather than calling it directly, because a library command runs over many loops:
+
+<Tabs syncKey="command-library">
+  <TabItem label="SolversLib">
+
+```java
+NamedCommands.registerCommand("Shoot", () ->
+  CommandScheduler.getInstance().schedule(new ShootCommand(shooter))
+);
+```
+
+  </TabItem>
+  <TabItem label="NextFTC">
+
+```java
+NamedCommands.registerCommand("Shoot", () ->
+  new ShootCommand(shooter).schedule()
+);
+```
+
+  </TabItem>
+  <TabItem label="Ivy">
+
+```java
+NamedCommands.registerCommand("Shoot", () ->
+  shoot(shooter).schedule() // shoot(...) returns an Ivy Command you built
+);
+```
+
+  </TabItem>
+</Tabs>
+
+The `Runnable` runs on the robot's loop thread when the marker fires. It should start something and return. Don't `sleep` or wait inside it.
+
+## Sequential Command Exports
+
+A Sequential Command export is a class you create and schedule yourself (SolversLib, NextFTC, or Ivy). It has no `init()`, and the Command Registrar isn't used. Instead, register your commands in your own code before you create the class. In the examples below, creating the `RobotContainer` from [above](#using-a-robotcontainer) does that.
+
+This applies to both **Embed Pose Data** settings. They differ only in when the generated code asks for each command (see [When to Register](/turtle-tracer-lib/named-commands/#when-to-register)), and registering first covers both.
+
+<Tabs syncKey="command-library">
+  <TabItem label="SolversLib">
+
+```java
+@Autonomous(name = "Red Auto")
+public class RedAuto extends CommandOpMode {
+
+  @Override
+  public void initialize() {
+    Follower follower = /* however your project creates it */;
+    RobotContainer robot = new RobotContainer(hardwareMap); // 1. registers the named commands
+
+    try {
+      schedule(new AutoPath(follower, hardwareMap, telemetry)); // 2. the generated class
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+}
+```
+
+  </TabItem>
+  <TabItem label="NextFTC">
+
+```java
+@Autonomous(name = "Red Auto")
+public class RedAuto extends NextFTCOpMode {
+
+  private Follower follower; // however your project creates it
+
+  @Override
+  public void onInit() {
+    new RobotContainer(hardwareMap); // 1. registers the named commands
+  }
+
+  @Override
+  public void onStartButtonPressed() {
+    try {
+      new AutoPath(follower, hardwareMap).schedule(); // 2. the generated class
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+}
+```
+
+  </TabItem>
+  <TabItem label="Ivy">
+
+```java
+@Autonomous(name = "Red Auto")
+public class RedAuto extends OpMode {
+
+  private Follower follower; // however your project creates it
+
+  @Override
+  public void init() {
+    Scheduler.reset();
+    new RobotContainer(hardwareMap); // 1. registers the named commands
+
+    try {
+      new AutoPath(follower, hardwareMap).command().schedule(); // 2. the generated class
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public void loop() {
+    follower.update();
+    Scheduler.execute();
+  }
+}
+```
+
+  </TabItem>
+</Tabs>
+
+`AutoPath` is the class Turtle Tracer generated, named by **Class Name** in the export dialog. The OpMode around it depends on your library and version, so treat these as outlines. Only the order is fixed: register first, then create the generated class. For the library setup around it, see [Getting Started](/turtle-tracer-lib/getting-started/) and [Exporting Code](/turtle-tracer/exporting/#command-based-recommended-advanced).
+
+### What the generated class does with a name
+
+With **Embed Pose Data** off, the constructor binds each marker name to its command once:
+
+```java
+pp = new TurtleTracerReader("AutoPath.turt", hw.appContext);
+pp.onEvent("SpinUp", NamedCommands.getCommand("SpinUp")).onEvent(
+  "Intake",
+  NamedCommands.getCommand("Intake")
+);
+```
+
+A command registered after this line is not picked up, because `getCommand` already returned the "unregistered" no-op. With **Embed Pose Data** on, the lookup happens just before each path runs:
+
+```java
+tracker.clearPathEvents();
+tracker.onParametric(0, 0.400, NamedCommands.getCommand("SpinUp"));
+tracker.setCurrentPath(startPointTODriveToShoot);
+```
+
+Either way, each path registers only its own markers, so `SpinUp` fires on the path where you placed it, even if a later path reuses the name.

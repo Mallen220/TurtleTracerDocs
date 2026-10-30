@@ -71,6 +71,7 @@ Simulate robot physics for path timing and visualization. Each field has a short
 - **Fill in from your Pedro constants file**: A collapsed section at the top. Paste your whole `Constants.java` (or `.kt`) and Turtle Tracer lists each setting it can read from it, with the value it has now and the one in your file, and the Pedro name it came from. Nothing changes until you press the button. It reads Pedro 3 `ForesightConfig` files (`maxAchievableForwardVelocity`, `maxAchievableStrafeVelocity`, `maxVelocityConstraint`, `maxAccelerationConstraint`, `maxDecelerationConstraint`, `timeoutConstraint`, and the brake coefficients) and the older Pedro 2 names (`xVelocity`, `yVelocity`, `PathConstraints`). It also sets the Pedro version and your constants class and follower method for exported code. It only sees numbers written in the file, as plain values, simple sums and products, or variables set in the same file. A value it can't work out is left alone. Max Velocity becomes your forward velocity unless you set a lower `maxVelocityConstraint`.
 
   Two things are left out on purpose, because the file's values would make the simulation less accurate. **Translational P** is not your Pedro kP: Pedro uses separate forward and strafe gains and caps braking power, so the value that makes the simulation swing like your robot at a corner is lower, and the Telemetry tab fits it from real corners. **Max Deceleration** is not read from `naturalForwardDeceleration` or `forwardZeroPowerAcceleration`, which are how fast the robot slows with no power, about a third of how fast it brakes. Measure it with the Telemetry tab, or set a `maxDecelerationConstraint`.
+
 - **Velocity**:
   - **Forward Velocity**: Top speed driving the way the robot faces (in/s). Pedro: `maxAchievableForwardVelocity`.
   - **Strafe Velocity**: Top speed driving sideways (in/s). Pedro: `maxAchievableStrafeVelocity`. Set it equal to Forward Velocity for a robot that is as fast in every direction.
@@ -149,7 +150,8 @@ Configure how code is generated from your paths. This tab is in the desktop app 
 
 **OpMode Class:**
 
-- **Generate Full Class**: Include class definition and imports.
+- **Generate Full Class**: Include class definition and imports. It is on by default.
+- **Command Registrar**: Optional. The class and method that registers your named commands, such as `org.firstinspires.ftc.teamcode.RobotCommands.register`. Exported OpModes with event markers call it from `init()` with `hardwareMap`. The same field is in the export dialog under **Options**, and the setting is shared. Sequential commands don't use it. See [Named Commands & Events](/turtle-tracer-lib/named-commands/opmode-exports/).
 - **Telemetry Implementation**: Choose the telemetry backend: **Panels (Bylazar)**, **Standard (FTC)**, **FtcDashboard + Standard**, or **None**.
 
 **Sequential Command:**

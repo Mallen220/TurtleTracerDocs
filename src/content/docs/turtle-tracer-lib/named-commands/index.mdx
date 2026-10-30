@@ -1,0 +1,55 @@
+---
+title: Named Commands & Events
+description: How event marker names become robot actions with NamedCommands, when to register your commands, and where to find the setup for each kind of export.
+head:
+  - tag: meta
+    attrs:
+      name: keywords
+      content: TurtleTracerLib, NamedCommands, event markers, FTC, robotics, Command Registrar, RobotContainer, register commands, SolversLib, NextFTC, Ivy
+---
+
+An [event marker](/turtle-tracer/event-markers/) in Turtle Tracer is only a name, such as `SpinUp`. The exported code doesn't know what `SpinUp` does. `NamedCommands` is where you tell it. It is a registry that maps each name to a piece of code (a `Runnable`) that you write.
+
+## How It Fits Together
+
+1. You place a marker named `SpinUp` on a path in Turtle Tracer.
+2. You export. The generated code looks up `NamedCommands.getCommand("SpinUp")` and gives it to a `ProgressTracker`.
+3. While the robot drives, the tracker watches the follower. When the robot reaches the marker, it runs the `Runnable` you registered under `SpinUp`.
+
+You write the registration yourself:
+
+```java
+NamedCommands.registerCommand("SpinUp", () -> shooter.spinUp());
+```
+
+The registry is static and shared by the whole app, so any class can register a command, as long as it does so before the generated code looks the name up.
+
+:::caution
+Names are case-sensitive, with surrounding spaces trimmed. `SpinUp` and `spinup` are different commands. A marker with no registered command doesn't crash the robot. It logs `Warning: No command registered with name: SpinUp` and does nothing.
+:::
+
+## When to Register
+
+The generated code calls `getCommand` at different moments depending on the export:
+
+| Export                                          | `getCommand` runs                                       | Register before                   |
+| ----------------------------------------------- | ------------------------------------------------------- | --------------------------------- |
+| **OpMode**                                      | When each path starts, in the state machine             | The OpMode starts following paths |
+| **Sequential Command**, Embed Pose Data **on**  | When each path starts, inside the command group         | The command group is scheduled    |
+| **Sequential Command**, Embed Pose Data **off** | In the constructor, when `TurtleTracerReader` is set up | `new AutoPath(...)` is called     |
+
+To sidestep the difference, register everything before you create the routine: in `init()` for an OpMode, or before `new AutoPath(...)` for a command group. That works for every export.
+
+## Naming Rules
+
+The name in `registerCommand` must match the marker's name in Turtle Tracer, capitals included. The name dropdown in the Event Markers panel lists names you've already used, which helps avoid typos.
+
+Registering a name again replaces the earlier command, and several markers with the same name all run the same command.
+
+## Where to Go Next
+
+Which page you need depends on what you export:
+
+- [OpMode Exports](/turtle-tracer-lib/named-commands/opmode-exports/): the Java or Kotlin OpMode has no robot container, so Turtle Tracer can call a registration method of yours from `init()`.
+- [RobotContainer & Command Groups](/turtle-tracer-lib/named-commands/robot-container/): registering commands in a `RobotContainer`, then creating a SolversLib, NextFTC, or Ivy command group after them.
+- [Debugging & Reference](/turtle-tracer-lib/named-commands/reference/): listing what's registered, fixing warnings, using `ProgressTracker` yourself, and every `NamedCommands` method.

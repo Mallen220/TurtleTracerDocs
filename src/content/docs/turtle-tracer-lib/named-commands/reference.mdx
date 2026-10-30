@@ -1,0 +1,83 @@
+---
+title: Debugging & Reference
+description: List registered commands, fix missing-command warnings, use ProgressTracker by hand, and look up every NamedCommands method.
+head:
+  - tag: meta
+    attrs:
+      name: keywords
+      content: TurtleTracerLib, NamedCommands, event markers, FTC, robotics, debugging, listAllCommands, hasCommand, ProgressTracker, API reference
+---
+
+## Debugging
+
+Show everything that's registered on the Driver Station, for example at the end of `init()`:
+
+```java
+NamedCommands.listAllCommands(telemetry);
+telemetry.update();
+```
+
+This prints each name with its class and description, then a total.
+
+To check a single name in code, use `hasCommand`. `getCommand` can't tell you, because it never returns `null`:
+
+```java
+if (!NamedCommands.hasCommand("SpinUp")) {
+    telemetry.addLine("SpinUp is not registered");
+}
+```
+
+| Symptom                                                   | Likely cause                                                                                                                                   |
+| --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Warning: No command registered with name: X` in the logs | A typo or case difference, or it was registered after the lookup. See [When to Register](/turtle-tracer-lib/named-commands/#when-to-register). |
+| `Warning: Attempted to execute unregistered command: X`   | The no-op placeholder ran. The name was never registered, or was registered too late.                                                          |
+| The Command Registrar call isn't in the exported code     | The path has no event markers, the field isn't a class and a method, or **Generate Full Class** is off.                                        |
+| The Command Registrar field is missing from the dialog    | It only appears for OpMode exports (Java Code or Kotlin Code), inside **Options**.                                                             |
+| A command from a previous OpMode still runs               | The registry is static. Register in `init()` each time, or call `NamedCommands.clearAllCommands()` first.                                      |
+
+## Using ProgressTracker Yourself
+
+The exports set up the `ProgressTracker` for you. If you write your own routine, you can use the same pieces. See [ProgressTracker](/turtle-tracer-lib/progress-tracker/) for everything it can do.
+
+```java
+ProgressTracker progressTracker = new ProgressTracker(follower, telemetry);
+
+// Trigger "OpenClaw" at 50% (0.5) of the path. Runs the registered command.
+progressTracker.registerEvent("OpenClaw", 0.5);
+
+// Tell it which path you're following. This resets its event state.
+progressTracker.setCurrentPath(myPath);
+
+// Every loop, next to follower.update():
+progressTracker.update();
+```
+
+To run a registered command by hand, call `executeEvent`. It runs once per registration cycle, so it can't fire twice:
+
+```java
+progressTracker.executeEvent("OpenClaw");
+```
+
+Inside a `SequentialCommandGroup`, you can wait for an event instead of using `update()`:
+
+```java
+new WaitUntilCommand(() -> progressTracker.shouldTriggerEvent("OpenClaw")),
+new InstantCommand(() -> progressTracker.executeEvent("OpenClaw"))
+```
+
+## NamedCommands Reference
+
+| Method                                           | What it does                                                                              |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `registerCommand(String name, Runnable command)` | Registers or replaces a command. The name can't be empty and the command can't be `null`. |
+| `registerCommand(name, command, description)`    | The same, with a description for the debug list.                                          |
+| `getCommand(String name)`                        | Returns the command, or a no-op with a warning if there is none.                          |
+| `hasCommand(String name)`                        | `true` if a command is registered under that name.                                        |
+| `getCommandDescription(String name)`             | The description, or an empty string.                                                      |
+| `getAllCommandNames()`                           | Every registered name, as a `String[]`.                                                   |
+| `getCommandCount()`                              | How many commands are registered.                                                         |
+| `removeCommand(String name)`                     | Removes one command. Returns whether it existed.                                          |
+| `clearAllCommands()`                             | Removes every command and description.                                                    |
+| `listAllCommands(Telemetry telemetry)`           | Writes the list to the Driver Station.                                                    |
+
+Because `NamedCommands` only uses `Runnable`, it works with the plain FTC SDK, SolversLib, NextFTC, and Ivy alike.

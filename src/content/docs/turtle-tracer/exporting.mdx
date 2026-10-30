@@ -22,7 +22,7 @@ Every export starts from the **Export** menu in the top-right corner of the navi
 ![The Export menu, listing the export formats.](../../../assets/screenshots/export-menu.png)
 
 1.  **Open the Export menu**: Click **Export**, then choose a format: **Java Code**, **Kotlin Code**, **Points Array**, **Sequential Command**, **.turt File**, **Export as Image**, **Export Animated**, or **Strategy Sheet**. You can also use a shortcut, such as <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> (or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> on macOS) for Java code. See [Controls & Shortcuts](/turtle-tracer/controls/#exporting) for the rest.
-2.  **Adjust Options**: Each format opens a dialog with its own options, such as **Package Name**, **Generate Full Class**, **Code Units** (imperial or metric), or the **Target Library** tabs for sequential commands. The code preview updates as you change them.
+2.  **Adjust Options**: Each format opens a dialog with its own options. The ones you change often, such as **Language**, **Target Library**, and **Class Name**, stay in view. Click **Options** to reach the set-once ones: **Package Name**, **Command Registrar** (OpMode exports), **Code Units** (imperial or metric), and **Generate Full Class** or **Embed Pose Data in Code**. The code preview updates as you change them.
 3.  **Copy or Save**:
     - Click **Copy Code** to paste the generated code into Android Studio.
     - Click **Save to File** to download it as a `.java` file (`.kt` if you export Kotlin), or a `.txt` file for a points array. The **.turt File** dialog has a **Download as .turt** button instead.
@@ -37,6 +37,7 @@ Generates a complete, standalone OpMode for your autonomous routine, in Java or 
 - **Snippets**: Uncheck "Generate Full Class" to get just the path construction code for copy-pasting into your own classes.
 - **Hardcoded Paths**: The geometry is baked into the generated file. You do **not** need to put the `.turt` file on the robot.
 - **Event Markers**: Each marker becomes a `ProgressTracker` registration that runs the command you registered with `NamedCommands` under the marker's name.
+- **Command Registrar** (optional): Name a method of yours, such as `org.firstinspires.ftc.teamcode.RobotCommands.register`, and the generated `init()` calls it with `hardwareMap` so your named commands exist before the first path starts. It's written only when the path has event markers. You set it under **Options**.
 
 ### Example Output
 
@@ -44,7 +45,19 @@ This is the OpMode generated for a three-path routine with a wait, a `SpinUp` ev
 
 <GeneratedCode example="routine-opmode" />
 
-Register the `SpinUp` and `Intake` commands before the routine runs, for example in `init()`. See [Named Commands & Events](/turtle-tracer-lib/named-commands/).
+Register the `SpinUp` and `Intake` commands before the routine runs. Without a Command Registrar, that means editing the generated `init()`, which the next export overwrites. With one, the export writes the call for you:
+
+```java
+follower = Constants.create(hardwareMap);
+follower.setPose(p.of(9.000, 25.000, 0.000));
+
+org.firstinspires.ftc.teamcode.RobotCommands.register(hardwareMap); // Team's named commands
+
+pathTimer = new ElapsedTime();
+paths = new Paths(follower); // Build paths
+```
+
+See [Named Commands & Events](/turtle-tracer-lib/named-commands/opmode-exports/) for the registration class and a step-by-step setup.
 
 ## Command-Based (Recommended, Advanced)
 
@@ -56,8 +69,9 @@ Generates a command group for use with command-based frameworks.
   - **SolversLib**: Standard integration.
   - **NextFTC**: Experimental support.
   - **Ivy**: Experimental support for Pedro Pathing's [Ivy](https://github.com/Pedro-Pathing/Ivy). Ivy builds commands with static factories, so the generated class hands back a `Command` from `command()` instead of extending one. Call `Scheduler.reset()` in `init()`, start the routine with `new AutoPath(follower, hardwareMap).command().schedule()`, and call `follower.update()` and `Scheduler.execute()` every loop.
-- **Dynamic Loading**: Unless you turn on **Embed Pose Data**, this mode uses `TurtleTracerReader` to load path data from the `.turt` file at runtime. **You must put your `.turt` file on the robot** for this to work. See [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/).
+- **Pose data**: **Embed Pose Data in Code** is on by default, so the poses are written into the class and you don't need the `.turt` file on the robot. Turn it off and the class uses `TurtleTracerReader` to load path data from the `.turt` file at runtime. **You must put your `.turt` file on the robot** for that to work. See [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/).
 - **Features**: Automatically handles `FollowPath`, `Wait`, `Turn`, and event triggers. Event markers use TurtleTracerLib events, and each path registers only its own markers, so they trigger on the right path in a chain.
+- **Named commands**: Register your commands in your own code (a `RobotContainer` works well) before you create the class. The Command Registrar isn't offered here. See [Sequential Command Exports](/turtle-tracer-lib/named-commands/robot-container/#sequential-command-exports).
 
 ### Example Output
 
@@ -126,5 +140,6 @@ Create high-quality visualizers to share your strategy.
 
 - **Search (Ctrl+F)**: Quickly find specific lines or markers in the generated code.
 - **Package Name**: Set your team's package (e.g., `org.firstinspires.ftc.teamcode`) to fix imports automatically.
+- **Command Registrar** (OpMode exports only): The class and method that registers your named commands, for example `org.firstinspires.ftc.teamcode.RobotCommands.register`. A line under the field shows what will be added to `init()`. See [Named Commands & Events](/turtle-tracer-lib/named-commands/opmode-exports/).
 - **Code Units**: Generate the code in imperial (inches) or metric (cm). For sequential commands, metric code generation requires **Embed Pose Data in Code**, and the dialog warns you if it's off.
 - **Save to File**: Directly save `.java` or `.txt` files to your computer.

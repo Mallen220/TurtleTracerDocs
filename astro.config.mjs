@@ -1,9 +1,12 @@
 // @ts-check
 import { defineConfig } from "astro/config";
 import starlight from "@astrojs/starlight";
+import remarkGfm from "remark-gfm";
 
 // https://astro.build/config
 export default defineConfig({
+  // Tables (and other GitHub-flavored Markdown) need this plugin in this build.
+  markdown: { remarkPlugins: [remarkGfm] },
   site: "https://www.turtletracer.com/",
   integrations: [
     starlight({
@@ -43,7 +46,21 @@ export default defineConfig({
             },
             {
               label: "Named Commands & Events",
-              slug: "turtle-tracer-lib/named-commands",
+              items: [
+                { label: "Overview", slug: "turtle-tracer-lib/named-commands" },
+                {
+                  label: "OpMode Exports",
+                  slug: "turtle-tracer-lib/named-commands/opmode-exports",
+                },
+                {
+                  label: "RobotContainer & Command Groups",
+                  slug: "turtle-tracer-lib/named-commands/robot-container",
+                },
+                {
+                  label: "Debugging & Reference",
+                  slug: "turtle-tracer-lib/named-commands/reference",
+                },
+              ],
             },
             {
               label: "TurtleTracerReader",
