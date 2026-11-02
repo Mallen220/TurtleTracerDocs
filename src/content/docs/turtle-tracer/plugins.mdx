@@ -83,6 +83,8 @@ If your plugin registers an action that generates code for the sequential export
 
 The same context has a `language` (`"java"` or `"kotlin"`). If your action's `toJavaCode` and `toSequentialCommand` write Kotlin when `context.language` is `"kotlin"`, set `supportsKotlin: true` on the action. Without it, Kotlin exports leave a `// TODO` comment in the action's place. See [Kotlin export](/turtle-tracer/exporting/#kotlin).
 
+When the user exports a project that mirrors for the alliance, `context.allianceMirroring` is `true` and a `ctx` variable (TurtleTracerLib's `AutoContext`) is in scope. Wrap any pose your action writes in `ctx.pose(...)` and any heading in radians in `ctx.heading(...)`, so it is mirrored with the rest of the path. See [Mirroring for the Other Alliance](/turtle-tracer/exporting/#mirroring-for-the-other-alliance).
+
 The `plugins/turtle.d.ts` type definitions in the Turtle Tracer repository list the current types.
 
 #### Example: A Simple Exporter

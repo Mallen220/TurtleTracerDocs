@@ -9,6 +9,7 @@ import com.pedropathing.api.Paths.path
 import com.pedropathing.math.Pose
 import com.pedropathing.paths.interpolator.Interpolator
 import com.qualcomm.robotcore.hardware.HardwareMap
+import com.turtletracerlib.auto.TurtleAuto
 
 import dev.nextftc.core.commands.Command
 import dev.nextftc.core.commands.groups.SequentialGroup
@@ -22,6 +23,7 @@ import com.turtletracerlib.pathing.ProgressTracker
 import com.turtletracerlib.pathing.NamedCommands
 import com.turtletracerlib.TurtleTracerReader
 
+@TurtleAuto(name = "AutoPath")
 class AutoPath(
     private val follower: Follower,
     hw: HardwareMap,

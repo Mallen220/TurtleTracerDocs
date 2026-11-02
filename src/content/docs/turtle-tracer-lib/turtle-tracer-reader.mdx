@@ -141,6 +141,17 @@ progressTracker.setCurrentPath(nextPath);
 
 The generated command-based and Java code already does this for you. See [ProgressTracker](/turtle-tracer-lib/progress-tracker/) for `clearPathEvents()` and segment-scoped events.
 
+## Mirroring for the Other Alliance
+
+To run a path drawn for one alliance on the other, give the reader a mirror. It usually comes from the [Auto Selector](/turtle-tracer-lib/auto-selector/):
+
+```java
+TurtleTracerReader reader = new TurtleTracerReader("AutoPath.turt", hw.appContext)
+    .mirrored(ctx.mirror());
+```
+
+After that, `get()`, `getAllPoses()` and `pose` event markers return mirrored poses. The raw file data from `getStartPoint()`, `getLines()` and `getShapes()` stays as it was saved. If you don't call `mirrored`, or pass `null`, nothing is mirrored.
+
 ## Best Practices
 
 - **Naming Conventions**: Give your points clear, descriptive names in TurtleTracer (for example `preloadDrop` or `samplePickup1`). `TurtleTracerReader` relies on these names, with punctuation removed.

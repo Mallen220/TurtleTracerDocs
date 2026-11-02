@@ -66,6 +66,10 @@ export default defineConfig({
               label: "TurtleTracerReader",
               slug: "turtle-tracer-lib/turtle-tracer-reader",
             },
+            {
+              label: "Auto Selector & Mirroring",
+              slug: "turtle-tracer-lib/auto-selector",
+            },
           ],
         },
         {

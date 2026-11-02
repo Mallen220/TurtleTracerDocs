@@ -1,0 +1,219 @@
+---
+title: Auto Selector & Mirroring
+description: Choose an autonomous routine and alliance from the gamepad during init, and run a path drawn for the red side on the blue side.
+head:
+  - tag: meta
+    attrs:
+      name: keywords
+      content: TurtleTracerLib, auto selector, alliance selection, mirroring, FieldMirror, AutoSelector, AutoRegistry, FTC, red alliance, blue alliance
+---
+
+Most teams have more than one autonomous routine, and every team plays on both alliances. Without a selector most teams need to come up with their own solutions or have many OpModes. The optional auto selector replaces those with one OpMode: during init it shows a list on the Driver Station, the driver uses the gamepad to pick a routine and an alliance, and the OpMode runs that routine when Start is pressed. This is totally optional and not required for any of Turtle Tracers main features. This is an addon, not a requirement.
+
+## What Mirroring Means
+
+In most FTC games the red and blue halves of the field are copies of each other, turned around. A path drawn on the red side can run on the blue side if every point is moved to the matching spot on the blue half and every heading is turned to match. This is called mirroring.
+
+Each routine can be drawn for either alliance, and you tell the selector which (see [Which Side Each Path Is Drawn For](#which-side-each-path-is-drawn-for)). A routine that doesn't say is treated as drawn for red. When the driver picks the other alliance, the routine is mirrored. When the driver picks its own alliance, or doesn't pick one, it runs as drawn.
+
+## A Complete Example
+
+This OpMode offers two routines. `TwoScore` and `ThreeScore` stand for your own auto classes.
+
+```java
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.turtletracerlib.auto.*;
+
+@Autonomous(name = "Auto")
+public class MainAuto extends LinearOpMode {
+    @Override
+    public void runOpMode() {
+        // 1. List the routines the driver can choose from.
+        AutoRegistry<Command> autos = new AutoRegistry<Command>()
+            .add("2 Score", ctx -> new TwoScore(ctx))
+            .add("3 Score", ctx -> new ThreeScore(ctx));
+
+        // 2. Create the menu with the default settings.
+        AutoSelector<Command> selector = new AutoSelector<>(autos, AutoConfig.defaults());
+
+        // 3. Show the menu until the driver presses Start.
+        while (opModeInInit()) {
+            selector.update(gamepad1, telemetry);
+        }
+
+        // 4. Build the routine the driver chose.
+        Command auto = selector.buildSelected();
+        // Run `auto` the same way you run any other command.
+    }
+}
+```
+
+Some parts of this need explaining:
+
+- `<Command>` is the type of your routines. If you use SolversLib, NextFTC or Ivy, use that library's `Command` class. TurtleTracerLib doesn't depend on any of them, so any type works.
+- `ctx -> new TwoScore(ctx)` is a lambda, a short way to write a small function. The selector doesn't create `TwoScore` straight away. It calls this function once, inside `buildSelected()`, after the driver has finished choosing.
+- `ctx` is an `AutoContext`. It holds the driver's choices, and your routine uses it to mirror its poses (see [Mirroring Your Paths](#mirroring-your-paths)).
+- `selector.update(...)` reads the gamepad and draws the menu. It has to run in a loop, or the menu won't respond.
+
+In Kotlin, `add` takes the lambda after the parentheses:
+
+```kotlin
+val autos = AutoRegistry<Command>()
+    .add("2 Score") { ctx -> TwoScore(ctx) }
+    .add("3 Score") { ctx -> ThreeScore(ctx) }
+```
+
+## Using the Menu
+
+The driver controls the menu with gamepad1:
+
+| Button                         | What it does                                                 |
+| ------------------------------ | ------------------------------------------------------------ |
+| D-pad up / down                | Move through the list (hold to keep moving)                  |
+| D-pad left / right, or bumpers | Change the alliance between none, red and blue               |
+| X                              | Change mirroring between auto, on and off                    |
+| A                              | Lock the choice so it can't be bumped. Press again to unlock |
+
+"Auto" mirroring means the selector decides from the alliance, as described above. "On" and "off" let the driver force it.
+
+If you stop and re-initialise the OpMode, the menu remembers the last choice.
+
+## Mirroring Your Paths
+
+The selector works out whether to mirror, but it can't move your robot's poses for you. Your routine does that with the `ctx` it receives.
+
+If your poses come from a `.turt` file, pass the mirror to the [TurtleTracerReader](/turtle-tracer-lib/turtle-tracer-reader/#mirroring-for-the-other-alliance). Every pose you read from it will then be mirrored when needed:
+
+```java
+// Inside TwoScore, using the ctx it was created with:
+TurtleTracerReader reader = new TurtleTracerReader("TwoScore.turt", hardwareMap.appContext)
+    .mirrored(ctx.mirror());
+Pose start = reader.get("startPoint");   // already mirrored if needed
+```
+
+If you type poses or headings into your code yourself, wrap each one:
+
+```java
+Pose pickup = ctx.pose(new Pose(48, 36, Math.toRadians(90)));
+double heading = ctx.heading(Math.PI / 2);
+```
+
+When the routine isn't being mirrored, `ctx.pose` and `ctx.heading` return exactly what you gave them, so you don't need an `if` around them.
+
+### Using Exported Code
+
+TurtleTracer can write all of this for you. In the Field tab's **Alliance Selection & Path Mirroring** section, set **Drawn For** to the project's alliance and turn on **Mirror to Blue** (or **Red**), then export a Sequential Command. **Preview on Blue** shows on the field how the path will run there. The class then takes an `AutoContext` as its last argument. Pass it the `ctx` from the selector, and add the routine with the same alliance:
+
+```java
+autos.add("2 Score", ctx -> new TwoScore(follower, hardwareMap, telemetry, ctx), Alliance.BLUE);
+```
+
+That's the SolversLib constructor. NextFTC and Ivy classes take `(follower, hardwareMap, ctx)`. The exported class knows which alliance it was drawn for and mirrors every pose, control point, heading, turn and pose marker itself, with or without **Embed Pose Data**. Adding it with the same alliance keeps the menu's **Mirror** line right. See [Mirroring for the Other Alliance](/turtle-tracer/exporting/#mirroring-for-the-other-alliance).
+
+Exported OpModes can mirror too. They show their own alliance menu during init, so they don't need an `AutoSelector` of yours.
+
+## Common Setups
+
+### Which Side Each Path Is Drawn For
+
+Each routine can be drawn for a different alliance, and that may change whenever a path is redrawn. Give each routine its side when you add it:
+
+```java
+autos.add("2 Score", ctx -> new TwoScore(ctx), Alliance.BLUE)   // drawn for blue
+     .add("3 Score", ctx -> new ThreeScore(ctx));                // not given: red
+```
+
+Now picking red mirrors "2 Score" and runs "3 Score" as drawn. For classes found with `@TurtleAuto`, use `@TurtleAuto(name = "2 Score", drawnFor = Alliance.BLUE)`.
+
+A routine can also say its side in its own code. `ctx.drawnFor(Alliance.BLUE)` returns the driver's choices for paths drawn for blue, so mirroring is worked out again for that side:
+
+```java
+public TwoScore(AutoContext autoContext) {
+    AutoContext ctx = autoContext.drawnFor(Alliance.BLUE);
+    // use ctx from here on
+}
+```
+
+Code exported from Turtle Tracer does this. If most of your routines are drawn for blue, change the side used by routines that don't give one with `AutoConfig.builder().baseAlliance(Alliance.BLUE)`.
+
+### A Separate File for Each Alliance
+
+If you draw a red version and a blue version of a routine yourself, you don't want the selector to mirror it as well. Add it with `MirrorPolicy.NEVER`, and use `ctx.pick` to load the right file:
+
+```java
+autos.add("Gate", ctx -> new Gate(ctx.pick("gate-red.turt", "gate-blue.turt")), MirrorPolicy.NEVER);
+```
+
+`ctx.pick(red, blue)` returns the first value on red and the second on blue. A routine added with `MirrorPolicy.NEVER` is never mirrored, even if the driver turns mirroring on with X.
+
+If none of your routines should ever be mirrored, set it for all of them with `AutoConfig.builder().mirrorPolicy(MirrorPolicy.NEVER)`. `MirrorPolicy.ALWAYS` does the opposite and mirrors whatever alliance is picked.
+
+### Knowing the Alliance in TeleOp
+
+The last choice is kept until the Robot Controller app restarts, so your TeleOp can read it:
+
+```java
+Alliance alliance = AutoSelection.alliance();   // RED, BLUE or NONE
+```
+
+An auto can record this itself. One that never mirrors calls `AutoSelection.record(Alliance.BLUE, false)`. One that does calls `AutoSelection.record(ctx)` once it has its context, which records the alliance it runs for and whether it mirrored. Code exported from Turtle Tracer does both.
+
+An auto can also set its own mirror policy, whatever it was registered with or the config says: `ctx.mirroring(MirrorPolicy.FOLLOW_ALLIANCE)` or `ctx.mirroring(MirrorPolicy.NEVER)`. The driver's override still applies on top.
+
+## Other Ways to Register Routines
+
+Instead of listing every routine with `add`, you can put `@TurtleAuto` on each class and have the registry find them:
+
+```java
+@TurtleAuto(name = "2 Score")
+public class TwoScore extends SequentialCommandGroup {
+    public TwoScore(AutoContext ctx) { /* ... */ }
+}
+```
+
+```java
+AutoRegistry<Command> autos = new AutoRegistry<Command>()
+    .using(follower, hardwareMap, telemetry)
+    .scan(hardwareMap.appContext, Command.class, "org.firstinspires.ftc.teamcode");
+```
+
+The last argument is the package to search, which keeps the search quick. `using(...)` gives the registry what your classes' constructors take. It builds each class with its public constructor that takes the most parameters, as long as every one is an `AutoContext` or something you gave to `using`. A class can also have a `static create(AutoContext)` method, or (in Kotlin) be an `object`.
+
+A class the registry can't build is left out of the menu, and the menu says why, for example `! Skipped 2 Score: needs Follower (give it to using(...))`. It never fails when the driver presses Start. `autos.skipped()` lists the reasons too. If the search can't read the app's files it finds nothing, so check that your routines appear in the menu.
+
+Classes exported from Turtle Tracer for SolversLib and NextFTC already have `@TurtleAuto`, with the project's name and alliance, whenever they use TurtleTracerLib for something else (event markers, reading the `.turt` file, or an alliance). Their constructors take `(follower, hardwareMap, telemetry)` (NextFTC: `(follower, hardwareMap)`) and, if they mirror, a context, so `using(follower, hardwareMap, telemetry)` is all they need. Code that doesn't use TurtleTracerLib never gets the annotation, because Java can't compile an annotation whose class isn't there.
+
+## Reference
+
+### Settings
+
+Pass these to `AutoConfig.builder()` and finish with `.build()`. Any you leave out use the default.
+
+| Setting                        | Default           | What it does                                         |
+| ------------------------------ | ----------------- | ---------------------------------------------------- |
+| `baseAlliance(Alliance)`       | `RED`             | The side a routine is drawn for if it doesn't say.   |
+| `defaultAlliance(Alliance)`    | `NONE`            | The alliance selected when the menu first opens.     |
+| `mirrorPolicy(MirrorPolicy)`   | `FOLLOW_ALLIANCE` | When to mirror: by alliance, `ALWAYS` or `NEVER`.    |
+| `mirrorAxes(MirrorAxes)`       | `BOTH`            | How a mirror flips the field (see the next table).   |
+| `allowAllianceSelection(bool)` | `true`            | `false` removes the alliance option from the menu.   |
+| `allowMirrorToggle(bool)`      | `true`            | `false` removes the X option from the menu.          |
+| `maxVisibleRows(int)`          | `6`               | How many routines show at once. Longer lists scroll. |
+| `fieldSize(double)`            | `144`             | Field size in inches.                                |
+| `updateTelemetry(bool)`        | `true`            | `false` if you call `telemetry.update()` yourself.   |
+
+### How Poses Are Mirrored
+
+Positions are in inches and headings in radians, on a 144 inch field.
+
+| `MirrorAxes`     | Position             | Heading        |
+| ---------------- | -------------------- | -------------- |
+| `BOTH` (default) | `(144 - x, 144 - y)` | `heading + PI` |
+| `X`              | `(144 - x, y)`       | `PI - heading` |
+| `Y`              | `(x, 144 - y)`       | `-heading`     |
+
+`BOTH` turns the field 180° around its centre. Use `X` or `Y` if your game's field is a mirror image across one line instead.
+
+### Other Gamepad Libraries
+
+`selector.update(gamepad1, telemetry)` reads an FTC SDK `Gamepad`. To use a different gamepad class, write a class that implements `AutoInput` (one method per button), call `selector.update(yourInput)`, and add each line from `selector.menuLines()` to telemetry yourself.

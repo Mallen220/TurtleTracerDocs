@@ -11,6 +11,7 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.paths.interpolator.Interpolator;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.turtletracerlib.TurtleTracerReader;
+import com.turtletracerlib.auto.TurtleAuto;
 import com.turtletracerlib.pathing.NamedCommands;
 import com.turtletracerlib.pathing.ProgressTracker;
 import dev.nextftc.core.commands.Command;
@@ -22,6 +23,7 @@ import dev.nextftc.core.commands.utility.InstantCommand;
 import dev.nextftc.core.commands.utility.LambdaCommand;
 import java.io.IOException;
 
+@TurtleAuto(name = "AutoPath")
 public class AutoPath extends Command {
 
   private final Follower follower;

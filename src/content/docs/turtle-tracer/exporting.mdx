@@ -22,7 +22,7 @@ Every export starts from the **Export** menu in the top-right corner of the navi
 ![The Export menu, listing the export formats.](../../../assets/screenshots/export-menu.png)
 
 1.  **Open the Export menu**: Click **Export**, then choose a format: **Java Code**, **Kotlin Code**, **Points Array**, **Sequential Command**, **.turt File**, **Export as Image**, **Export Animated**, or **Strategy Sheet**. You can also use a shortcut, such as <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> (or <kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>J</kbd> on macOS) for Java code. See [Controls & Shortcuts](/turtle-tracer/controls/#exporting) for the rest.
-2.  **Adjust Options**: Each format opens a dialog with its own options. The ones you change often, such as **Language**, **Target Library**, and **Class Name**, stay in view. Click **Options** to reach the set-once ones: **Package Name**, **Command Registrar** (OpMode exports), **Code Units** (imperial or metric), and **Generate Full Class** or **Embed Pose Data in Code**. The code preview updates as you change them.
+2.  **Adjust Options**: Each format opens a dialog with its own options. The ones you change often, such as **Language**, **Target Library**, and **Class Name**, stay in view. The dialog also shows whether the project mirrors for the alliance, which you set in the Field tab. Click **Options** to reach the set-once ones: **Package Name**, **Command Registrar** (OpMode exports), **Code Units** (imperial or metric), and **Generate Full Class** or **Embed Pose Data in Code**. The code preview updates as you change them.
 3.  **Copy or Save**:
     - Click **Copy Code** to paste the generated code into Android Studio.
     - Click **Save to File** to download it as a `.java` file (`.kt` if you export Kotlin), or a `.txt` file for a points array. The **.turt File** dialog has a **Download as .turt** button instead.
@@ -121,6 +121,47 @@ The OpMode and Sequential Command exports can be written in Kotlin as well as Ja
 - **Plugin actions**: A step that comes from a plugin that can't write Kotlin yet is left as a `// TODO` comment, and the dialog warns you. See [Plugins](/turtle-tracer/plugins/).
 
 Every example on this page has a **Kotlin** tab next to **Java**. The tab you pick is remembered across the docs.
+
+## Mirroring for the Other Alliance
+
+In most FTC games the red and blue halves of the field are copies of each other, so a path drawn for one alliance can run on the other if every point and heading is moved to the matching spot. The **Alliance Selection & Path Mirroring** section of the Field tab sets this up for each project. Its heading, and the Event Markers heading, have an info icon: both features need TurtleTracerLib on the robot, and the icon links to their docs. It works with TurtleTracerLib's [auto selector](/turtle-tracer-lib/auto-selector/): the code reads the driver's choice from an `AutoContext` and passes every pose and heading through it, so nothing changes when no mirroring is needed.
+
+- **Drawn For**: the alliance the project's paths are written for, **Red** or **Blue**. A new project has none (**NONE**), and clicking the selected alliance again clears it. With no alliance, exported code runs as drawn and doesn't use TurtleTracerLib for it.
+- **Mirror to Blue** (or **Mirror to Red**): the code says so explicitly either way, so it does what the project says whatever your selector's config is.
+  - **On**: the code tells its context to mirror when the driver picks the other alliance (`autoContext.drawnFor(Alliance.RED).mirroring(MirrorPolicy.FOLLOW_ALLIANCE)`), then records the alliance it ran for and whether it mirrored (`AutoSelection.record(ctx)`). The driver's mirror override on the gamepad still applies.
+  - **Off**: the code runs as drawn whichever alliance the driver picks, and records that with `AutoSelection.record(Alliance.RED, false)`.
+
+  Either way your TeleOp can read the alliance with `AutoSelection.alliance()` and whether the auto mirrored with `AutoSelection.isMirrored()`. The class's `@TurtleAuto` names the same policy (`FOLLOW_ALLIANCE` or `NEVER`), so the selector's menu shows what the code will do.
+
+- **Preview on Blue** (or **Red**): shows the path and the robot on the field as they will run for the other alliance, by the season's **Field Mirror**. A banner across the top of the field says you're previewing, with a **Stop** button. You can edit the path while you preview, just as on its own side: dragging a point on the mirrored path moves the matching point of the project's path, and the field shows positions on the side you're looking at. Obstacles stay where they are, so their handles are hidden during the preview. Turning the preview on or off doesn't change the project.
+
+These are saved in the project's `.turt` file, so each path can be drawn for a different alliance, and changing one project doesn't change the others. The export dialog shows the project's choice above the code, and the Code tab and auto export use it too.
+
+Everything the export writes is mirrored: poses, Bézier control points, heading angles, facing-point targets, **Rotate** steps and pose event markers. Steps added by plugins are mirrored only if the plugin supports it (see [Plugins](/turtle-tracer/plugins/#custom-actions-and-command-libraries)).
+
+TurtleTracerLib is optional. Exported code only imports it for what the project uses: event markers, reading poses from the `.turt` file (when **Embed Pose Data** is off), or an alliance. A project with none of these exports code that builds without TurtleTracerLib installed. Command classes that do use it (SolversLib and NextFTC) also get `@TurtleAuto(...)`, so your auto selector can find them with [`scan`](/turtle-tracer-lib/auto-selector/#other-ways-to-register-routines).
+
+### OpMode
+
+The OpMode shows an alliance menu on the Driver Station during init. The driver picks red or blue with D-pad left and right, and when Start is pressed the OpMode builds its paths for that alliance. Picking the alliance the project is drawn for runs the paths as drawn; picking the other mirrors them.
+
+How the field mirrors depends on the season, not the path, so it's a setting shared by every project: **Field Mirror** in [Settings](/turtle-tracer/settings/#code-export), under Code Export. The preview uses it too. Choose **Turn field 180°** (the default), **Flip left/right (X)** or **Flip top/bottom (Y)**.
+
+<GeneratedCode example="routine-opmode-mirrored" />
+
+### Command-Based
+
+The class takes an `AutoContext` as its last constructor argument and calls `drawnFor(...)` on it with the project's alliance, so it decides for itself whether to mirror. Get the context from an `AutoSelector` and pass it in when the routine is built. Adding the routine with the same alliance keeps the selector's menu right:
+
+```java
+autos.add("Routine", ctx -> new AutoPath(follower, hardwareMap, telemetry, ctx), Alliance.RED);
+```
+
+That's the SolversLib constructor. NextFTC and Ivy classes take `(follower, hardwareMap, ctx)`. How the field mirrors comes from your selector's `AutoConfig`, so the **Field Mirror** setting isn't used here. Without a selector, pass `AutoContext.unmirrored()` and the routine runs as drawn.
+
+When the class reads a `.turt` file, the reader mirrors the poses and the curves' control points come from the file too. With **Embed Pose Data**, each pose in the code is wrapped in `ctx.pose(...)` instead.
+
+<GeneratedCode example="routine-solverslib-mirrored" />
 
 ## Other Formats
 

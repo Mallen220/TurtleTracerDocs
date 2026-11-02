@@ -18,11 +18,13 @@ import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.command.WaitUntilCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 import com.turtletracerlib.TurtleTracerReader;
+import com.turtletracerlib.auto.TurtleAuto;
 import com.turtletracerlib.pathing.NamedCommands;
 import com.turtletracerlib.pathing.ProgressTracker;
 import java.io.IOException;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+@TurtleAuto(name = "AutoPath")
 public class AutoPath extends SequentialCommandGroup {
 
   private final Follower follower;
